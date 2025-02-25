@@ -114,33 +114,38 @@ datModel$EDA =  as.numeric(scale(datModel$EDA,center = T))
 datModel$KDE =  as.numeric(scale(datModel$KDE,center = T))
 datModel$Amb =  as.numeric(scale(datModel$Amb,center = T))
 
-datFit = datModel[complete.cases(datModel[,c("Pt","DV","Vel", "Fix", "Amb", "KDE", "EDA")]),]
+
 predictorVars = c("Vel", "Fix", "Amb", "KDE", "EDA")
 outcomeVars = c("wvTheta", "wvAlpha", "wvBeta", "wvGamma", "wvHG")
 Models = NULL
 
 
-
-Models[["NULL"]] = m0
 statDat = NULL
 for (dvName in outcomeVars){
-  datFit$DV = datFit[[dvName]]
+  datModel$DV = as.numeric(scale(datModel[[dvName]],center = T))
+  datFit = datModel[complete.cases(datModel[,c("DV","Vel", "Fix", "Amb", "KDE", "EDA")]),]
   m0 = lme4::lmer(DV ~1+
                     (1|Pt/Chan)+(1|Walk), data=datFit, na.action=na.exclude)
+  Models[[paste(dvName,"NULL",sep = "_")]] = m0
   for (ivName in predictorVars) {
     print(paste(dvName,ivName,sep = "_"))
     datFit$IV = datFit[[ivName]]
     m = lme4::lmer(DV ~ IV+
                      (1|Pt/Chan)+(IV|Walk), data=datFit, na.action=na.exclude)
     Models[[paste(dvName,ivName,sep = "_")]] = m
-    A = model.comparison(Models[["NULL"]], Models[[ivName]])
+    A = model.comparison(Models[[paste(dvName,"NULL",sep = "_")]], Models[[paste(dvName,ivName,sep = "_")]])
     temp = data.frame(DV = dvName,IV = ivName)
     temp$R_Squared_Change = A$r_squared_change[4]
-    A = anova(Models[["NULL"]], Models[[ivName]])
+    A = anova(Models[[paste(dvName,"NULL",sep = "_")]], Models[[paste(dvName,ivName,sep = "_")]])
     temp$Chisq = A$Chisq[2]
     temp$DF = A$Df[2]
     temp$p = A$`Pr(>Chisq)`[2]
+    temp$MyRChange = (r.squaredGLMM(Models[[paste(dvName,ivName,sep = "_")]])[2] - 
+                        r.squaredGLMM(Models[[paste(dvName,"NULL",sep = "_")]])[2])/r.squaredGLMM(Models[[paste(dvName,"NULL",sep = "_")]])[2]*100
     statDat = rbind(statDat,temp)
   }
 }
 statDat$Sig = ifelse(statDat$p<0.05,"*","")
+write.csv(statDat,"RSquareChangeStat.csv")
+tab_model(Models$wvTheta_NULL,show.se = T,show.stat = T,show.est = T, df.method = "satterthwaite", show.df = T)
+tab_model(Models$wvTheta_Vel,show.se = T,show.stat = T,show.est = T, df.method = "satterthwaite", show.df = T)
