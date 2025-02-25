@@ -121,17 +121,18 @@ Models = NULL
 
 
 
+
 Models[["NULL"]] = m0
 statDat = NULL
 for (dvName in outcomeVars){
-  datModel$DV = datModel[[dvName]]
+  datFit$DV = datFit[[dvName]]
   m0 = lme4::lmer(DV ~1+
                     (1|Pt/Chan)+(1|Walk), data=datFit, na.action=na.exclude)
   for (ivName in predictorVars) {
     print(paste(dvName,ivName,sep = "_"))
     datFit$IV = datFit[[ivName]]
     m = lme4::lmer(DV ~ IV+
-              (1|Pt/Chan)+(IV|Walk), data=datFit, na.action=na.exclude)
+                     (1|Pt/Chan)+(IV|Walk), data=datFit, na.action=na.exclude)
     Models[[paste(dvName,ivName,sep = "_")]] = m
     A = model.comparison(Models[["NULL"]], Models[[ivName]])
     temp = data.frame(DV = dvName,IV = ivName)
@@ -143,6 +144,7 @@ for (dvName in outcomeVars){
     statDat = rbind(statDat,temp)
   }
 }
+statDat$Sig = ifelse(statDat$p<0.05,"*","")
 
 tab_model(m0,show.se = T,show.stat = T,show.est = T, df.method = "satterthwaite", show.df = T)
 
