@@ -124,14 +124,20 @@ statDat = NULL
 for (dvName in outcomeVars){
   datModel$DV = as.numeric(scale(datModel[[dvName]],center = T))
   datFit = datModel[complete.cases(datModel[,c("DV","Vel", "Fix", "Amb", "KDE", "EDA")]),]
+  
   m0 = lme4::lmer(DV ~1+
                     (1|Pt/Chan)+(1|Walk), data=datFit, na.action=na.exclude)
+  
   Models[[paste(dvName,"NULL",sep = "_")]] = m0
   for (ivName in predictorVars) {
     print(paste(dvName,ivName,sep = "_"))
     datFit$IV = datFit[[ivName]]
     m = lme4::lmer(DV ~ IV+
                      (1|Pt/Chan)+(IV|Walk), data=datFit, na.action=na.exclude)
+ 
+    
+    
+    
     Models[[paste(dvName,ivName,sep = "_")]] = m
     A = model.comparison(Models[[paste(dvName,"NULL",sep = "_")]], Models[[paste(dvName,ivName,sep = "_")]])
     temp = data.frame(DV = dvName,IV = ivName)
