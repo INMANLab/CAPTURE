@@ -1,7 +1,7 @@
 # Python Pipeline	
 # NeuroIOT Data: Tutorial & Usage Guide
 
-### BEFORE DOING ANYTHING DOWNLOAD RW.zip FROM **SyncIOTDataPipeline** IN THE BOX 
+### BEFORE DOING ANYTHING DOWNLOAD RW.zip FROM **SyncIOTDataPipeline** IN THE BOX -- Hopefully this moves to a server based file but for now everything must be downloaded locally.
 
 ## START HERE
 Welcome to the NeuroIOT data repository! This tutorial will walk you through the process of extracting, merging, and using the various sensor data collected by Xsens, pupilphone(s), chestphone(s), and optional events.
