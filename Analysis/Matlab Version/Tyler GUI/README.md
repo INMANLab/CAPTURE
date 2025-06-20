@@ -1,10 +1,6 @@
 # Matlab Pipeline	
 
 # Table of Contents
-- [Multiple Transitions Spectrogram GUI](#MultTransSpecGramGUI)
+- [MultTransSpecGramGUI](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/MultTransSpecGramGUI.md)
 
-## MultTransSpecGramGUI
-Instructions on using the GUI: 
-
-<br>
 
