@@ -1,7 +1,7 @@
 # Matlab Pipeline	
 
 # Table of Contents
-- [Multiple Transitions Sepctrogram GUI](#MultTransSpecGramGUI)
+- [Multiple Transitions Spectrogram GUI](#MultTransSpecGramGUI)
 
 ## MultTransSpecGramGUI
 Instructions on using the GUI: 
