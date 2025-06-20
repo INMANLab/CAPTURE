@@ -11,5 +11,5 @@
 - RWNApp_EventViewer
 
 ### Glossary of Annotations and Data Structures
-- Annotation Brackets and Descriptions
+- [Task Annotation Brackets and Descriptions](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWN_Annotation_Glossary.md)
 
