@@ -1,4 +1,4 @@
-# 🧾 Annotation Glossary
+# Annotation Glossary
 This documents the annotation types (headings) each full walk. The related bracket codes and their meanings, if any, are included below each annotation type.
 
 ### Abnormal Beg / Abnormal End
@@ -57,13 +57,13 @@ This documents the annotation types (headings) each full walk. The related brack
 - Cory holds the door open for the participant
 
 ### Incorrect Turn Beg / Incorrect Turn End
-- Participant makes an incorrect turn and is corrected
+- participant makes an incorrect turn and is corrected
 
 ### LED
-- reen LED flashes
+- green LED flashes
 
 ### Landmark Beg / Landmark End
-- Appearance of a landmark along the pathway
+- appearance of a landmark along the pathway
 
 ### Lost Beg
 - **[lowConfidence]**: participant is not confident about their (wrong) direction
@@ -78,7 +78,7 @@ This documents the annotation types (headings) each full walk. The related brack
 ### New Context Beg / New Context End 
 - **[Hallway]**
 - **[ParkingLot]**
-- **[Sidewalk] **
+- **[Sidewalk]**
 - **[Ramp]**
 - **[Crosswalk]**
 - **[Lobby]**
