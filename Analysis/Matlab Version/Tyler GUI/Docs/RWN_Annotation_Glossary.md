@@ -1,7 +1,8 @@
 # Annotation Glossary
-This documents the annotation types (headings) each full walk. The related bracket codes and their meanings, if any, are included below each annotation type.
+This documents the annotation types of each full walk. The related bracket codes and their meanings, if any, are included below each annotation type.
 
 ### Abnormal Beg / Abnormal End
+Occurrence of anything unusual, unexpected, or out of the ordinary throughout the walk.
 - **[Social]**: anything out of the ordinary that involves people - doesn't include anytime a person was present, only times when the participant's eyes focused on a person, when a person appeared suddenly, or when there were large groups of people
 - **[nonSocial]**: doesn't involve people
 - **[sound]**: event involves sound (includes talking from another person)
@@ -20,24 +21,28 @@ This documents the annotation types (headings) each full walk. The related brack
 - **[partial]**: participant turns less than 180 degrees
 
 ### Choice Point
+Participant has many different paths as an option. 
 - **[2option]**: participant has choice to turn 2 directions
 - **[3option]**: participant has choice to turn 3 directions
 - **[Turn]**: participant turns
 - **[noTurn]**: participant goes straight
 
 ### Clapper
+Time points of when the clapper is clapped, which occurs at the beginning and end of the walk. 
 - **[firstBeginning]**: beginning of first clapper
 - **[firstEnding]**: ending of first clapper
 - **[lastBeginning]**: beginning of last clapper
 - **[lastEnding]**: ending of last clapper
 
 ### Correct Turn Beg / Correct Turn End
+Begins once participant starts to turn, ends when the turn ends and camera begins moving forward. 
 - **[rightTurn]**: participant turns right
 - **[leftTurn]**: participant turns left
 - **[forcedTurn]**: participant has to turn
 - **[nonforcedTurn]**: participant has option to go straight
 
 ### Doorway
+The exact video frame where the door frame is officially out of view, indicating the participant is in the door frame. 
 - **[in2in]**: indoor to indoor
 - **[in2out]**: indoor to outdoor
 - **[out2in]**: outdoor to indoor
@@ -54,24 +59,26 @@ This documents the annotation types (headings) each full walk. The related brack
 - **[opaque]**: door is opaque
 
 ### Held Door Beg / Held Door End
-- Cory holds the door open for the participant
+The beginning/end of when someone starts to hold the door open and ending when the participant is within the doorframe.
 
 ### Incorrect Turn Beg / Incorrect Turn End
-- participant makes an incorrect turn and is corrected
+Participant makes an incorrect turn and is corrected.
 
 ### LED
-- green LED flashes
+Green LED flashes.
 
 ### Landmark Beg / Landmark End
-- appearance of a landmark along the pathway
+Time points when one of the predetermined 150 landmarks are visibly present in the video. The "Event Description" contains the landmark name of a given time point. 
 
 ### Lost Beg
+Beginning of when participant does not know where to go next, can be simulataneously occurring with incorrect turn. 
 - **[lowConfidence]**: participant is not confident about their (wrong) direction
 - **[highConfidence]**: participant is confident about their (wrong) direction
 - **[selfCorrected]**: participants realizes on their own that they are lost
 - **[otherCorrected]**: someone else tells participant they are lost
 
 ### Lost End
+End of when participant does not know where to go next.
 - **[selfDirected]**: participant finds right direction themselves
 - **[otherDirected]**: someone else shows participant the right direction
 
@@ -90,26 +97,28 @@ This documents the annotation types (headings) each full walk. The related brack
 - **[Street]**
 
 ### Notes Beg / Notes End
-- anything that doesn't fit neatly into another category
+Anything that doesn't fit neatly into another category. Similar to 'Abnormal', but for anything the participant does out of the ordinary (e.g., If the participant turns around to ask a question.)
 
 ### Outdoor Beg / Outdoor End
-- participant is outdoors.
+Participant is outdoors (doorframe transitions from inside to outside and vice versa). 
 
 ### Pointing Beg / Pointing End
-- Cory points the correct direction
+Cory's hand appears in the video to direct the participant or hold the door. 
 
 ### Stare Beg / Stare End
-- someone stares at the participant
+Someone stares at the participant.
 
 ### Stop Beg / Stop End
-- participant stops walking
+Participant stops moving completely. Event description indicates length (Short stop: ½s – 2s; Long stop: >2s).
 
 ### Talking Beg
+Any sort of talking begins, or talking continues but a new conversation begins. 
 - **[other]**: someone other than participant starts talking
 - **[self]**: participant starts talking
 - **[toParticipant]**: someone is talking directly to the participant
 
 ### Talking End
+Any sort of talking ends.
 - **[other]**: someone other than participant finishes talking
 - **[self]**: participant finishes talking
 - **[toParticipant]**: someone finishes talking directly to the participant
