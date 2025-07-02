@@ -1,0 +1,120 @@
+<deployment-project plugin="plugin.apptool" plugin-version="1.0">
+  <configuration file="D:\CAPTURE Project\GUI\TylerNew\MultTransSpecGramGUI_AK_1.prj" location="D:\CAPTURE Project\GUI\TylerNew" name="MultTransSpecGramGUI_AK_1" target="target.mlapps" target-name="Package App">
+    <param.appname>MultTransSpecGramGUI_AK_1</param.appname>
+    <param.authnamewatermark />
+    <param.email />
+    <param.company />
+    <param.icon />
+    <param.icons />
+    <param.summary />
+    <param.description />
+    <param.screenshot>C:\Users\alire\AppData\Local\Temp\tp9b2f5094_0dba_4be9_9d99_4b10caba5f2d.png</param.screenshot>
+    <param.version>1.1</param.version>
+    <param.products.name />
+    <param.products.id />
+    <param.products.version />
+    <param.platforms>
+      <item>win64</item>
+    </param.platforms>
+    <param.output>${PROJECT_ROOT}</param.output>
+    <param.guid>8bce48b3-2176-4ce2-8d2d-5f37294e5806</param.guid>
+    <unset>
+      <param.authnamewatermark />
+      <param.email />
+      <param.company />
+      <param.icon />
+      <param.icons />
+      <param.summary />
+      <param.description />
+      <param.products.name />
+      <param.products.id />
+      <param.products.version />
+      <param.output />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}\MultTransSpecGramGUI_AK.mlapp</file>
+    </fileset.main>
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}\calcAdjRespGLMEFit.m</file>
+      <file>${PROJECT_ROOT}\calcRWAPerm_mex.mexw64</file>
+      <file>${PROJECT_ROOT}\calcRWAPVal_mex.mexw64</file>
+      <file>${PROJECT_ROOT}\combineGoProVids.m</file>
+      <file>${PROJECT_ROOT}\CustomRegionGUI.mlapp</file>
+      <file>${PROJECT_ROOT}\findRWAFiles.m</file>
+      <file>${PROJECT_ROOT}\morseSpecGram.m</file>
+      <file>${PROJECT_ROOT}\MultSegGLMEGUI.mlapp</file>
+      <file>${PROJECT_ROOT}\MultTransSpecGramGUI.mlapp</file>
+      <file>${PROJECT_ROOT}\RWAnalysis2.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\continuous\findpeaks.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\continuous\mtfftc.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\continuous\mtspectrumc.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\helper\change_row_to_column.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\helper\dpsschk.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\helper\getfgrid.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\helper\getparams.m</file>
+      <file>D:\Martina Test\chronux_2_11\spectral_analysis\helper\specerr.m</file>
+    </fileset.depfun>
+    <fileset.resources />
+    <fileset.package />
+    <build-deliverables>
+      <file location="D:\CAPTURE Project\GUI" name="TylerNew" optional="false">D:\CAPTURE Project\GUI\TylerNew</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>C:\Program Files\MATLAB\R2024b</root>
+      <toolboxes>
+        <toolbox name="matlabcoder" />
+        <toolbox name="embeddedcoder" />
+        <toolbox name="gpucoder" />
+        <toolbox name="fixedpoint" />
+        <toolbox name="matlabhdlcoder" />
+        <toolbox name="neuralnetwork" />
+      </toolboxes>
+      <toolbox>
+        <matlabcoder>
+          <enabled>true</enabled>
+        </matlabcoder>
+      </toolbox>
+      <toolbox>
+        <embeddedcoder>
+          <enabled>true</enabled>
+        </embeddedcoder>
+      </toolbox>
+      <toolbox>
+        <gpucoder>
+          <enabled>true</enabled>
+        </gpucoder>
+      </toolbox>
+      <toolbox>
+        <fixedpoint>
+          <enabled>true</enabled>
+        </fixedpoint>
+      </toolbox>
+      <toolbox>
+        <matlabhdlcoder>
+          <enabled>true</enabled>
+        </matlabhdlcoder>
+      </toolbox>
+      <toolbox>
+        <neuralnetwork>
+          <enabled>true</enabled>
+        </neuralnetwork>
+      </toolbox>
+    </matlab>
+    <platform>
+      <unix>false</unix>
+      <mac>false</mac>
+      <windows>true</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.0</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>win64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

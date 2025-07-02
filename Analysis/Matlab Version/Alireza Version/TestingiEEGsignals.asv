@@ -1,0 +1,8 @@
+%run from the Rasterplot GUI
+dat = app.RWdat.allVars;
+datEEG = dat.d_np;
+% t = dat.ntp_np;
+fs = 250;
+
+t = (0:size(datEEG,1)-1)/fs;
+plot(t,datEEG(:,1));
