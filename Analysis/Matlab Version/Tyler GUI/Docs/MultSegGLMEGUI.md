@@ -53,6 +53,7 @@ MultSegGLMEGUI(GUIhandle);
   Selects the dependent variable of the model.  
   - ➤ This is the dropdown menu to the left of the '~' sign.  
   - ➤ Your selection will populate the 'GLME Model' text box.
+  - ➤ For a description of each variable, refer to [getMultData function](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWAnalysis2_Functions.md#getmultdataobj-varargin)
 
 - **Fixed or Random Effect selector**  
   Selects the Fixed Effect (FE) or Random Effect (RE) to be added to the model.  
