@@ -13,5 +13,5 @@
 
 ### Glossary of Annotations and Data Structures
 - [Walking Task Annotation Brackets and Descriptions](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWN_Annotation_Glossary.md)
-- Important Functions and Data Structures in RWAnalysis2.m
+- [RWAnalysis2.m class documentation](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWAnalysis2_Functions.md#rwanalysis2-class-documentation)
 
