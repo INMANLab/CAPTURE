@@ -73,3 +73,7 @@ MultSegGLMEGUI(GUIhandle);
 
   
 The bottom of the GUI has the complete written out model that is trained on the data and serves as an example input. 
+
+### Table of electrode regions, sorted by patient and channel numbers.
+
+![Elec_Locs](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/ElecLocs.png)
