@@ -106,3 +106,32 @@ In addition to the segment table, `getMultData` produces event-aligned matrices 
 | `obj.MultTable`        | Per-patient raw and derived data (used internally) |
 
 This table forms the basis for selecting variables in the GLME GUI. Each variable can be used as a fixed or random effect in the model, and the structure supports multi-level modeling across patients, brain regions, and channels.
+
+
+---
+## saveMultData(obj,varargin)
+Saves the processed data structures to a `.mat` file for persistent storage.
+
+#### Save format:
+
+| Variable       | Description |
+|----------------|-------------|
+| `multseg`      | The full segment-level table and related metadata (`obj.MultSeg`) used for GLME modeling |
+| `multtrans`    | Transition-aligned neural and behavioral data (`obj.MultTrans`) used for spectrograms |
+| `multtable`    | Per-patient processed data (`obj.MultTable`) used internally or for debug |
+
+```matlab
+save(obj.AnalysisFile,'multseg','multtrans','multtable','-v7.3');
+```
+
+---
+## loadMultData(obj,varargin)
+
+Loads The `loadMultData` function restores previously saved analysis data from disk if the .mat file exists, allowing you to resume work without re-running the full `getMultData` pipeline.
+
+| Saved Field   | Loaded Into        | Description |
+|---------------|--------------------|-------------|
+| `multseg`     | `obj.MultSeg`      | Segment-level table and metadata for GLME modeling |
+| `multtrans`   | `obj.MultTrans`    | Transition-aligned data for spectrogram analysis |
+| `multtable`   | `obj.MultTable`    | Per-patient data tables used internally |
+
