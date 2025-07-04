@@ -9,7 +9,7 @@ Important files for getting started: 
 1. **Create an instance** of the `RWAnalysis2` class.  
 2. **Set the path** to your `.mat` Analysis File:  
    `RWAnalysis2_MedianNorm_2sec.mat`  
-3. **Load the multi-patient data:**  
+3. **[Load](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWAnalysis2_Functions.md#loadmultdataobjvarargin) the multi-patient data:**  
    `GUIhandle.loadMultData;`  
 4. **Launch the spectrogram GUI:**  
    `MultTransSpecGramGUI(GUIhandle);`
