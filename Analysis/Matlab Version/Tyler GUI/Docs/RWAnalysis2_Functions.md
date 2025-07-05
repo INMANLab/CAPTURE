@@ -80,22 +80,64 @@ These features are extracted using the [FOOOF](https://fooof-tools.github.io/foo
 
 In addition to the segment table, `getMultData` produces event-aligned matrices used for spectrogram visualizations (e.g. via `MultTransSpecGram`).
 
-| Field           | Description |
-|------------------|-------------|
-| `DT_np`          | Neural power matrix (time × trial × channel) |
-| `DT_np_idx`      | Time index of event-aligned windows |
-| `DT_xs_idx`      | Velocity-aligned sample index |
-| `DT_gz_idx`, `DT_am_idx`, ... | Other behavioral feature-aligned indices |
-| `DT_Evnt`        | Event labels (e.g. stop/go) |
-| `DT_Desc`        | Event descriptions |
-| `DT_StopWalk`, `DT_GoWalk` | Boolean flags for walking transitions |
-| `DT_Region`, `DT_Chan`, `DT_Patient` | Metadata arrays for selecting patient/channel subsets for plotting |
-| `OL`             | Outlier flags (NaNs, artifactual trials) |
-| `OL2`            | Simple IED detection + NaNs combined across all channels/pts |
-| `TimeSamp_*`, `TimeSec_*` | Sample and second indices for plotting aligned time axes |
-| `FS_*`           | Sampling rates for each data stream |
-| `F_wv`, `F_pe`   | Frequency vectors used for wavelet/pepisode transforms |
-| `WinSegSec`, `WinTransSec` | Analysis window lengths (in seconds) |
+| **Field**         | **Description** |
+|------------------|-----------------|
+| `DT_np_idx`       | Index of each segment's center sample (for neural power) |
+| `DT_xs_idx`       | Sample index for velocity-aligned events |
+| `DT_xs_vchg`      | Percent change in velocity for each trial |
+| `DT_gz_idx`       | Sample index aligned to fixation events |
+| `DT_am_idx`       | Sample index aligned to ambient condition changes |
+| `DT_kd_idx`       | Sample index for kernel density estimate (position) |
+| `DT_wv_idx`       | Sample index aligned to wavelet power data |
+| `DT_bi_idx`       | Sample index for biometric (e.g., EDA) data |
+| `DT_pe_idx`       | Sample index for pepisode (burst detection) data |
+| `DT_im_idx`       | Sample index for inertial movement (IMU/gyro) data |
+| `Walk`            | Walk number associated with each transition trial |
+| `NSamp`           | Number of samples in each transition window |
+| `Evnt`            | Event label (e.g., stop or go) |
+| `Desc`            | Event description string |
+| `StopWalk`        | Boolean flag indicating "stop walk" transitions |
+| `GoWalk`          | Boolean flag indicating "go walk" transitions |
+| `OL`              | Outlier flags: NaN or -500 (used to exclude noisy trials) |
+| `OL2`             | Combined artifact detection: NaNs and z-scored outlier power (IED detection) |
+| `Region`          | Brain region numeric ID |
+| `RegionLabel`     | Brain region name string |
+| `Chan`            | Channel ID for each trial |
+| `ChanLabel`       | Channel label string (e.g., `AntHipp-a`) |
+| `Patient`         | Patient ID associated with each transition |
+| `TimeSamp_np`     | Sample indices for neural power (wavelet) |
+| `TimeSec_np`      | Same as above, but in seconds |
+| `TimeSamp_xs`     | Sample indices for velocity time series |
+| `TimeSec_xs`      | Velocity time axis in seconds |
+| `TimeSamp_gz`     | Sample indices for fixation time series |
+| `TimeSec_gz`      | Fixation time axis in seconds |
+| `TimeSamp_am`     | Sample indices for ambient signal |
+| `TimeSec_am`      | Ambient signal time axis in seconds |
+| `TimeSamp_kd`     | Sample indices for KDE signal |
+| `TimeSec_kd`      | KDE time axis in seconds |
+| `TimeSamp_wv`     | Sample indices for wavelet power |
+| `TimeSec_wv`      | Wavelet time axis in seconds |
+| `TimeSamp_bi`     | Sample indices for biometric signal |
+| `TimeSec_bi`      | Biometric time axis in seconds |
+| `TimeSamp_pe`     | Sample indices for pepisode signal |
+| `TimeSec_pe`      | Pepisode time axis in seconds |
+| `TimeSamp_im`     | Sample indices for inertial signal |
+| `TimeSec_im`      | Inertial/IMU time axis in seconds |
+| `FS_np`           | Sampling rate for neural power (wavelet) |
+| `FS_xs`           | Sampling rate for velocity data |
+| `FS_gz`           | Sampling rate for fixation data |
+| `FS_am`           | Sampling rate for ambient signal |
+| `FS_kd`           | Sampling rate for KDE signal |
+| `FS_wv`           | Sampling rate for wavelet power |
+| `FS_bi`           | Sampling rate for biometric data (e.g., EDA) |
+| `FS_pe`           | Sampling rate for pepisode burst detection |
+| `FS_im`           | Sampling rate for IMU/inertial data |
+| `F_bi`            | Field labels for biometric channels |
+| `F_im`            | Field labels for inertial movement channels |
+| `F_pe`            | Frequency bands used in pepisode analysis |
+| `Freq`            | Frequency vector for wavelet transform |
+| `WinSegSec`       | Window size in seconds for segment analysis and smoothing |
+| `WinTransSec`     | Window size in seconds for transition-aligned analysis |
 
 ### Summary
 
