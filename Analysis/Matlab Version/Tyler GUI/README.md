@@ -12,5 +12,6 @@
 - RWNApp_EventViewer
 
 ### Glossary of Annotations and Data Structures
-- [Task Annotation Brackets and Descriptions](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWN_Annotation_Glossary.md)
+- [Walking Task Annotation Brackets and Descriptions](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWN_Annotation_Glossary.md)
+- [RWAnalysis2.m class documentation](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWAnalysis2_Functions.md#rwanalysis2-class-documentation)
 

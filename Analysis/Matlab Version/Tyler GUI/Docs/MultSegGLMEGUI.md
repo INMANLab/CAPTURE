@@ -13,7 +13,7 @@ Important files for getting started: 
 1. **Create an instance** of the `RWAnalysis2` class.  
 2. **Set the path** to your `.mat` Analysis File:  
    `RWAnalysis2_MedianNorm_2sec.mat`  
-3. **Load the multi-patient data:**  
+3. **[Load](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWAnalysis2_Functions.md#loadmultdataobjvarargin) the multi-patient data:**  
    `GUIhandle.loadMultData;`  
 4. **Launch the spectrogram GUI:**  
    `MultSegGLMEGUI(GUIhandle);`
@@ -53,6 +53,7 @@ MultSegGLMEGUI(GUIhandle);
   Selects the dependent variable of the model.  
   - ➤ This is the dropdown menu to the left of the '~' sign.  
   - ➤ Your selection will populate the 'GLME Model' text box.
+  - ➤ For a description of each variable, refer to [getMultData function](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/RWAnalysis2_Functions.md#getmultdataobj-varargin)
 
 - **Fixed or Random Effect selector**  
   Selects the Fixed Effect (FE) or Random Effect (RE) to be added to the model.  
@@ -72,3 +73,7 @@ MultSegGLMEGUI(GUIhandle);
 
   
 The bottom of the GUI has the complete written out model that is trained on the data and serves as an example input. 
+
+### Table of electrode regions, sorted by patient and channel numbers.
+
+![Elec_Locs](https://github.com/INMANLab/CAPTURE/blob/main/Analysis/Matlab%20Version/Tyler%20GUI/Docs/ElecLocs.png)
