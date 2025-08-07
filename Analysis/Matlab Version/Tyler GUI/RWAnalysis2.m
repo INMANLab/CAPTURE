@@ -3049,8 +3049,8 @@ classdef RWAnalysis2 < handle
                 FP_box1 = nan(size(np,2),length(FPLabels));
                 FP_box2 = nan(size(np,2),length(FPLabels));
                 % wait_msg = parfor_wait(size(np,2));
-                % for k=1:size(np,2)
-                parfor k=1:size(np,2)
+                for k=1:size(np,2)
+                % parfor k=1:size(np,2)
                     % wait_msg.Send;
                     pwr_box1 = mean(abs(calcWavTF(np(tidx_box1_np,k),fbins,250)).^2,2);
                     pwr_box2 = mean(abs(calcWavTF(np(tidx_box2_np,k),fbins,250)).^2,2);
