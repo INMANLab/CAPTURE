@@ -2412,6 +2412,71 @@ classdef RWAnalysis2 < handle
             MultTransSpecGramGUI(obj);
         end
 
+         function plotFooofGif(obj,varargin)
+            p = obj.parseInputs(varargin{:});
+            
+            if isempty(p.permtype)
+                error('permtype must be specified!');
+            end
+        
+            warning('off','MATLAB:contour:ConstantData');
+            
+            % transtype = p.transtype; %'Outdoor Beg', 'Outdoor End', 'Doorway'
+            % regiontype = p.regiontype; %'AntHipp','LatTemp','Ent+Peri','PostHipp+Para','All Chans','Custom'
+            % walktype = p.walktype; %'First Walks','Last Walks','Stop Walks','Go Walks','All Walks', '1,2,5'
+            % veltype = p.veltype; %'', 'High Change', 'Low Change'
+            % patienttype = p.patienttype; %'All Patients', '2,4'
+            % desctype = p.desctype; %close, open, etc. (optional, will skip if empty)
+            permtype = p.permtype; %standard, zscore
+            correctiontype = p.correctiontype; %cluster, pixel, fdr, fdr+cluster (if empty, cluster correction is skipped)
+            if strcmp(correctiontype,'fdr+cluster') && strcmp(permtype,'standard')
+                error('fdr+cluster cannot be performed with the standard permtype!');
+            end
+            transrng = p.transrng; %default [-10,10]
+            normrng = p.normrng; %default [-10,10] must be within transrng
+            if ~p.fullwalknorm
+                if normrng(1)<transrng(1) || normrng(2)>transrng(2) || normrng(2)<=normrng(1)
+                    error('normrng is incorrect!');
+                end
+            end
+            % pval = p.pval; %default p=0.05
+            % pvalclust = p.pvalclust; %default 0.01
+            % plottrials = p.plottrials;
+            % trialsfreqrng = p.trialsfreqrng;
+            % plotpowercomp = p.plotpowercomp;
+            % plotfooofcomp = p.plotfooofcomp;
+            boxcomprng = p.boxcomprng; %2x4 matrix where rows are each box and cols are low/high ranges for time/freq
+            % if isempty(p.clim)
+            %     switch permtype
+            %         case 'zscore'
+            %             climit = [-10,10];
+            %         case 'standard' %dB
+            %             climit = [-1,1];
+            %     end
+            % else
+            %     climit = p.clim;
+            % end
+        
+            %Getting trials and specgram data
+            obj.filterMultTransData(varargin{:}); %table of all trials and corresponding info (this creates MT and must be run before getFilteredMultTransData)
+            obj.getFilteredMultTransData(transrng); %raw power for all trials (time x freq x trial)
+        
+            %Init some params
+            % tsamp = obj.MultTrans.MTd.tsamp_wv; %+-10sec at 25Hz (downsampled by 10 from 250)
+            % tsec = obj.MultTrans.MTd.tsec_wv;
+            % baseidx = tsec>=normrng(1) & tsec<=normrng(2); %baseline (normalization) indices
+            % nperm = 1000; %permutations
+        
+            % pwr = obj.MultTrans.MTd.d_wv;
+            % tsec = obj.MultTrans.MTd.tsec_wv;
+            % freq = obj.MultTrans.MTd.freq_wv;
+            np = obj.MultTrans.MTd.d_np;
+            tsec_np = obj.MultTrans.MTd.tsec_np;
+            FooofPlotGif(np, tsec_np, boxcomprng);
+            
+        end
+
+
         function varargout = plotMultTransSpecGramPerm(obj,varargin)
             %Plot specgram of transitions for all patients and channels
             %using smoothed/downsampled specgram data generated in
