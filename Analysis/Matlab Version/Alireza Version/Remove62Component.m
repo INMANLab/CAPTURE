@@ -7,7 +7,8 @@ addpath(genpath(ChronuX_path));
 set(0, 'DefaultTextInterpreter', 'none')
 %% find patient .mat files and add the directory to path
 % requires +TextProcess Folder
-folderPath = uigetdir(pwd, 'Select the folder that contains individual data');
+folderPath = 'D:\CAPTURE Project\GUI\Data';%uigetdir(pwd, 'Select the folder that contains individual data');
+
 if folderPath ~= 0 % If the user selects a folder
     files = dir(fullfile(folderPath,'*.mat'));
     fileNames = {files.name};
@@ -22,9 +23,18 @@ end
 %% Parameters
 minSampNumToIgnore = 20; % in samples identify the length to not interpolate| 0.06s -> 15 Samples
 minSampNumToInclude = 10*250; % Minimum number of samples to process the chunk
-gainAll = [0,.1];
+% gainAll = [0,.1];
+% patientPars =table;
+%%
+% winSize = movingwin(1);
+% nOverlap = movingwin(2);
+% skipFlag = true;
+% % skipFlag = false;
+% 
+% tempTab = table(pIdx,wIdx,chIdx,chunk,winSize,nOverlap,TW,k,skipFlag);
+% patientPars = cat(1,patientPars,tempTab);
 %% Reading the data
-for pIdx = 2:2 %unique(pList.pID)'
+for pIdx = 2:5%unique(pList.pID)'
     for wIdx = unique(pList.wID(pList.pID == pIdx))'
         disp("=========================================================")
         disp("=========================================================")
@@ -67,6 +77,9 @@ for pIdx = 2:2 %unique(pList.pID)'
                 %---------------------|
                 %--------------------- Find non-empty sections for Filtering
                 nanIdx = isnan(channelDat);
+                if(nanIdx(1)==1)
+                    nanIdx(1)=0;
+                end
                 disp("NaN Ranges for RW"+pIdx+"_Walk"+wIdx+" Channel: "+chIdx+":")
                 disp(string(round(diff(reshape(find(diff([nanIdx;0])),2,[]))/Fs,2)))
                 % disp(diff(reshape(find(diff([0;nanIdx;0])),2,[]))'/Fs);
@@ -93,10 +106,16 @@ for pIdx = 2:2 %unique(pList.pID)'
                 %--------------------- Filtering
                 dat.d_np_interp(:,chIdx) = channelDat;
                 for chunk = 1:size(epochIdx,2)
+                    % skipFlag = false;
+                    % if(skipFlag)
+                    %     continue;
+                    % end
+
+
                     eegDat = channelDat(epochIdx(1,chunk):epochIdx(2,chunk));
                     %----------------- Remove 62.5 hz
                     params.Fs = Fs;
-                    movingwin = [5, 1];
+                    movingwin = [5, 2.5];
                     fRes = 1;
                     TW = movingwin(1)*fRes;
                     [e,v] = dpss(movingwin(1)*Fs,TW,10);
@@ -112,14 +131,24 @@ for pIdx = 2:2 %unique(pList.pID)'
                     params.pad = 1;
                     params.trialave = 0;
                     tau = 10;
+                  
+                    eegDatF= rmlinesmovingwinc(eegDat, movingwin, tau, params, 0,'',62.5,true);
+                  
+
                     % figure
-                    eegDatF= rmlinesmovingwinc(eegDat, movingwin, tau, params, 0,'n',62.5,true);
+                    % eegDatF= rmlinesmovingwinc(eegDat, movingwin, tau, params, 0,'y',62.5,true);
+                    % title("RW"+pIdx+"_Walk"+wIdx+" Channel: "+chIdx+" Chunk:"+chunk)
+
+
+                    % params.fpass = [62,63];
+                    % [S1,f]=mtspectrumc(eegDat,params);
 
                     % params.Fs = Fs;
                     % movingwin = [5, 2.5];
+                    % params.fpass = [62,63];
                     % params.tapers = [3 5];
                     % params.pad = 1;
-                    % [S1,f]=mtspectrumc(eegDat,params);
+                    % [S1,f]=mtspectrumc(eegDatF,params);
                     % [datafit,Amps]=fitlinesc(eegDat,params,0,'y',62.5);
                     % eegDatF = eegDat;
                     % eegDatF = eegDatF-2*datafit;
@@ -127,11 +156,11 @@ for pIdx = 2:2 %unique(pList.pID)'
                     % figure;plot(datafit)
                     
                     % %----------- Graphics for check
-                    % figure('units','normalized','outerposition',[0 0 1 1])
-                    % % hold on
-                    % % eegDat(isnan(eegDat))=0;
-                    % % rmlinesmovingwinc(eegDat, movingwin, tau, params, 0,'y',62.5,false,gain);
-                    % 
+                    % figure('units','normalized','outerposition',[0 0 .5 1])
+                    % % % hold on
+                    % % % eegDat(isnan(eegDat))=0;
+                    % % % rmlinesmovingwinc(eegDat, movingwin, tau, params, 0,'y',62.5,false,gain);
+                    % % 
                     % pwelch(eegDat,round(movingwin(1)*250),round(movingwin(2)*250),round(movingwin(1)*250),Fs);hold on
                     % pwelch(eegDatF,round(movingwin(1)*250),round(movingwin(2)*250),round(movingwin(1)*250),Fs)
                     % %------------|
