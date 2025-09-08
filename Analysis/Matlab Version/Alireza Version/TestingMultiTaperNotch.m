@@ -4,24 +4,27 @@ rng(7);                                % reproducible noise
 Fs   = 250;                            % sampling rate (Hz)
 T    = 2;                              % duration (s)
 t    = (0:1/Fs:T-1/Fs)';               % time vector (N=500)
-FCut = 60:63;62.5;                           % target notch frequency (Hz)
-
+fComp = 62.5;
+FCut = 60:0.5:65;                           % target notch frequency (Hz)
+snr = 10;
 % --- Build test signals ---
 % 1) Pure tone at the notch frequency
-sig1 = 1.0 * sin(2*pi*FCut*t);
+sig1 = 1.0 * sin(2*pi*fComp*t);
+% sig1 = awgn(sig1,snr);
 
 % 2) Multi-tone + noise with a component at the notch frequency
-sig2 = 0.8*sin(2*pi*10*t) + 0.6*sin(2*pi*30*t) + 0.5*sin(2*pi*FCut*t) ...
+sig2 = 0.8*sin(2*pi*10*t) + 0.6*sin(2*pi*30*t) + 0.5*sin(2*pi*fComp*t) ...
      + 0.20*randn(size(t));
-
+% sig2 = awgn(sig2,snr);
 % 3) Control (no component at the notch) to test collateral damage
 sig3 = 0.8*sin(2*pi*10*t) + 0.6*sin(2*pi*30*t) + 0.20*randn(size(t));
+% sig3 = awgn(sig3,snr);
 
 signals = {sig1, sig2, sig3};
 names   = {'Pure 62.5 Hz', '10+30+62.5 Hz + noise', '10+30 Hz + noise (no 62.5)'};
 
 % --- Filter each signal ---
-filtered = cellfun(@(x) Filter.MultiTaperNotchFilter(x, FCut, Fs, 'n'), signals, 'UniformOutput', false);
+filtered = cellfun(@(x) Filter.MultiTaperNotchFilter(x, fComp, Fs, 'n'), signals, 'UniformOutput', false);
 
 % --- Visualization helpers ---
 Nfft = 512;  % finer frequency grid for nicer PSD curves
@@ -51,12 +54,12 @@ for k = 1:numel(signals)
     nexttile; 
     plot(f, 10*log10(Pxx+eps), 'LineWidth', 1); grid on; xlim([0 120]);
     xlabel('Frequency (Hz)'); ylabel('PSD (dB)'); title('PSD (raw)');
-    xline(FCut,'--','Notch f_0','LabelOrientation','horizontal');
+    xline(mean(FCut),'--','Notch f_0','LabelOrientation','horizontal');
 
     nexttile; 
     plot(f, 10*log10(Pyy+eps), 'LineWidth', 1); grid on; xlim([0 120]);
     xlabel('Frequency (Hz)'); ylabel('PSD (dB)'); title('PSD (filtered)');
-    xline(FCut,'--','Notch f_0','LabelOrientation','horizontal');
+    xline(mean(FCut),'--','Notch f_0','LabelOrientation','horizontal');
 end
 
 % --- Quantitative sanity check: attenuation at FCut ---
@@ -70,13 +73,15 @@ for k = 1:numel(signals)
 end
 
 %% frequency-sweep check around the notch ---
-FCut = 62.5;
-freqsToProbe = FCut + (-4:0.01:4);   % ±4 Hz around notch in 0.5 Hz steps
-FCut = 60:.5:63;
+fComp = 62.5;
+freqsToProbe = fComp + (-4:0.01:4);   % ±4 Hz around notch in 0.5 Hz steps
+FCut = 60:.5:65;
 amps = zeros(size(freqsToProbe));
+snr=5;
 for i = 1:numel(freqsToProbe)
     f0 = freqsToProbe(i);
     xt = sin(2*pi*f0*t);
+    sig1 = awgn(sig1,snr);
     yt = Filter.MultiTaperNotchFilter(xt, FCut, Fs, 'n');
     [Pyy,f] = psdFun(yt);
     amps(i) = 10*log10(Pyy(getIdx(f, f0)) + eps);

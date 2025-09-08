@@ -1,9 +1,7 @@
-function sigF = MultiTaperNotchFilter(sig,fCut,Fs)
-% sig is the EEG epoch 
-% fCut is the frequency to be removed can be an array of frequencies but
-% shouldn't be so close
-% Fs is sampling rate
+function sigF = MultiTaperNotchFilter(sig,fCut,Fs,plotFlag)
 
+
+fCut = 62.5;62:0.5:63;
 
 params.Fs = Fs;
 
@@ -49,10 +47,11 @@ end
 indx = unique(unique(indx));
 fsig=f(indx);
 for ch=1:C
-   % freqs{ch}=fsig;
-   % Amps{ch}=A(indx,ch);
-   % Nf=length(fsig);
-   datafit(:,ch)=exp(1i*2*pi*(0:N-1)'*fsig/Fs)*A(indx,ch)+exp(-1i*2*pi*(0:N-1)'*fsig/Fs)*conj(A(indx,ch));
+   freqs{ch}=fsig;
+   Amps{ch}=A(indx,ch);
+   Nf=length(fsig);
+   fsig = 62.5;
+   datafit(:,ch)=exp(i*2*pi*(0:N-1)'*fsig/Fs)*mean(A(indx,ch))+exp(-i*2*pi*(0:N-1)'*fsig/Fs)*conj(mean(A(indx,ch)));
 end
 
 
