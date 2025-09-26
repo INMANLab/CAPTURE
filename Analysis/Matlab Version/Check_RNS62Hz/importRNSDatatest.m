@@ -9,6 +9,65 @@ for fIdx = 1:length(files)
     datAll = cat(1,datAll,dat);
 end
 %%
+A = datAll(215600:291700,1);
+A(A>-500)=0;
+plot(A)
+
+
+B = A(6349:6364);
+figure
+subplot 211
+plot(B)
+xlabel("sample")
+subplot 212
+Y = fftshift(fft(B,64));
+L = length(Y);
+Fs = 250;
+plot(Fs/L*(-L/2:L/2-1),abs(Y),"LineWidth",3);
+hold on
+xline(62.5)
+xline(-62.5)
+title("fft Spectrum in the Positive and Negative Frequencies")
+xlabel("f (Hz)")
+ylabel("|fft(X)|")
+
+B = A(6349:65799);
+figure
+subplot 211
+plot(B)
+xlabel("sample")
+subplot 212
+Y = fftshift(fft(B));
+L = length(B);
+Fs = 250;
+plot(Fs/L*(-L/2:L/2-1),abs(Y),"LineWidth",3);
+hold on
+xline(62.5)
+xline(-62.5)
+title("fft Spectrum in the Positive and Negative Frequencies")
+xlabel("f (Hz)")
+ylabel("|fft(X)|")
+
+
+B = A(6349:6364);
+plot(B)
+% B(10:11)=-512;
+figure
+subplot 211
+stem(B)
+xlabel("sample")
+subplot 212
+Y = fftshift(fft(B,32));
+L = length(Y);
+Fs = 250;
+plot(Fs/L*(-L/2:L/2-1),abs(Y),"LineWidth",3);
+hold on
+xline(62.5)
+xline(-62.5)
+title("fft Spectrum in the Positive and Negative Frequencies")
+xlabel("f (Hz)")
+ylabel("|fft(X)|")
+%%
 figure
 chIdx = 1;
 gDat = npDat(:,chIdx);
@@ -21,26 +80,26 @@ L = size(datAll,1);
 plot(t,datAll(L-length(t)+1:end,chIdx))
 %%
 % 
-% figure
-% for chIdx = 1:4
-%     idx = 1:size(datAll,1);
-%     % chunkIdx = [1,idx(datAll(:,chIdx)<=-500)];
-%     t = [1,idx(datAll(:,chIdx)<=-500)];
-%     tE = t([1,diff(t)]>1)/(250*60);
-%     tS = t([diff(t),1]>1)/(250*60);
-%     % dt = diff(t);
-%     % dt = dt(dt>1);
-%     disp("Recording Duration")
-%     disp(tE-tS);
-%     disp("Reset Duration")
-%     disp(tE(1:end-1)-tS(2:end))
-%     subplot(4,1,chIdx)
-%     plot(idx/(250*60),datAll(:,chIdx))
-%     hold on
-%     plot(t/(250*60),datAll(t),'*')
-%     xline(t([diff(t),1]>1)/(250*60))
-%     xline(t([1,diff(t)]>1)/(250*60))
-% end
+figure
+for chIdx = 1:4
+    idx = 1:size(datAll,1);
+    % chunkIdx = [1,idx(datAll(:,chIdx)<=-500)];
+    t = [1,idx(datAll(:,chIdx)<=-500)];
+    tE = t([1,diff(t)]>1)/(250*60);
+    tS = t([diff(t),1]>1)/(250*60);
+    % dt = diff(t);
+    % dt = dt(dt>1);
+    disp("Recording Duration")
+    disp(tE-tS);
+    disp("Reset Duration")
+    disp(tE(1:end-1)-tS(2:end))
+    subplot(4,1,chIdx)
+    plot(idx/(250*60),datAll(:,chIdx))
+    hold on
+    plot(t/(250*60),datAll(t),'*')
+    xline(t([diff(t),1]>1)/(250*60))
+    xline(t([1,diff(t)]>1)/(250*60))
+end
 
 %%
 figure

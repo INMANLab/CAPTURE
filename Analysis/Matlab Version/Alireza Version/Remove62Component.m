@@ -237,3 +237,41 @@ for pIdx = 2:5%unique(pList.pID)'
         end
     end
 end
+
+
+%%
+
+tEnd = 2;
+t = 1/250:1/250:tEnd;
+t = t*1000;
+tN = 1/62.5:1/62.5:tEnd;
+tN = tN *1000;
+dat = A;
+
+figure
+subplot 211
+plot(t,dat(1:length(t)))
+xlabel("time (ms)")
+hold on 
+xline(tN)
+subplot 212
+pwelch(dat(1:length(t)),[],[],[],250)
+
+wo = 62.5/(250/2);  
+bw = wo/35;
+[b62,a62] = iirnotch(wo, bw); % 60Hz IIR filter
+datF = filtfilt(b62,a62,dat);
+
+figure
+subplot 211
+plot(t,datF(1:length(t),1))
+xlabel("time (ms)")
+hold on 
+xline(tN)
+subplot 212
+pwelch(datF(1:length(t)),[],[],[],250)
+
+figure
+plot(t,dat(1:length(t),1))
+hold on
+plot(t,datF(1:length(t),1))

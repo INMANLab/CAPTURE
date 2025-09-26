@@ -84,42 +84,14 @@ classdef RWAnalysis2 < handle
     % X eBosc pepisode (2-20Hz, 2-5, 5-8, 8-12) and alignment to events
     % X calc velocity change by patient instead of entire group (done)
     % X Recalculate indoor/outdoor spectrum plots from long ago (done)
-    % X mtAlpha ~ Vel + Fix + Amb + KDE + EDA + (1|uPtChan) + (1|Pt) + (Vel + Fix + Amb + KDE + EDA|Walk) (done)
-    % X SpecgramGUI: abs(head turns), plot all predictors in raster (ckb/edit for subset) (done)
-    % X Add "Body Turn Beg" and "Body Turn End" to RWNGUI (done)
-    % X Incorporate Kiersten's new events (done)
-    % X Example video with predictors
-    %     1) zoom with both plots linked (done)
-    %     2) add predictor selection (done)
-    %     3) black background (done)
-    %     4) barplot of theta (needed?)
-    %     5) gopro 
-    %     6) eyetracking with dot (done) 
-    %     7) raw data (done)
-    %     8) audio (done)
-    %     9) box around PeT (done)
-    %     10) eventtable/chan gui frontend (done)
-    %     11) make mp4 (stitch audio/video automatically) (done)
-    % 
-    % *SpecgramGUI: 
-    %     1) theta(4-8)/gamma(30-85) ratio boxplot (show correlation with fooofex and add as another predictor variable)
-    %     2) fooof offset in same plot as exponent
-    %     3) evoked potential 
-    %     4) plv
-    %     5) fooof peak freq (theta, alpha, beta)
-    %     6) Pepisode for 12-16Hz (low beta) and 17-30Hz (high beta) (done) 
-    %     7) reduce pep to 3 cycles (tried this and does not work as well as 10 cycles) (done) 
-    %     8) try fixed instead of knee for fbosc 
-    %     9) Option to plot specgram and predictors in two separate axes one on top of other
-    %    10) Compare fooof fit on average participant vs single trial
-    %    11) Metric to show large residuals at low freq in fooof fit
-    %    12) Methods description of fooof comparison (knee/fixed)
-    %
-    % *GLMEGUI: in/out and conf matrix plots, boxplot comparison with pepisode
-    % *****Check model fit for fooof over time
-    % *Find frame of 1st fixation to each of the landmarks for each walk and add to events (add Landmark event, in description add landmark ID and remembered/forgotten)
-    % *Incorporate more predictors: gaze x/y, head turn separate from body turn, heart rate, respiration rate
+    % *Pepisode for 12-16Hz, fooof offset in same plot as exponent
+    % *Try out new dynamic fooof (specparam)
+    % *mtAlpha ~ Vel + Fix + Amb + KDE + EDA + (1|uPtChan) + (1|Pt) + (Vel + Fix + Amb + KDE + EDA|Walk) (also fix code)
+    % *Add theta(4-8)/gamma(30-85) ratio to boxplot to compare with fooof
+    % *Add heart rate, respiration rate, *eye tracking, *head movements, etc. 
+    % *add in/out and conf matrix plots to gui and boxplot comparison with pepisode
     % Correct/Incorrect turns gamma timing with low freq suppression (phase amp coupling) (GUI?) (captured by fooof?)
+    % Add "Body Turn Beg" and "Body Turn End" to RWNGUI.
     % 5/2, 5/6, 5/8 are missing drift table for chest phone
 
     %%%%%%%%%%%%%%%%%%%
@@ -127,7 +99,7 @@ classdef RWAnalysis2 < handle
         RootDir; PatientID; DB; WalkNames; WalkNums; DParsed; PatientList; PatientIdx;
         ChanLabels; InOutTimes; DTable; DisabledWalks; FB; Vid; RegionTable;
         StopGoWalks; AnalysisFile; WinSegSec; WinTransSec; 
-        MultTable; MultSeg; MultTrans; PredList; PredYlim; PredYscale;
+        MultTable; MultSeg; MultTrans; 
     end
 
     %%%%%%%%%%%%%%%%%%%
@@ -173,22 +145,6 @@ classdef RWAnalysis2 < handle
                 {'Left Amygdala - Anterior Hippocampus (Long Axis - Dentate Gyrus)','Left Mid Hippocampus - Posterior Hippocampus','Right Amygdala - Anterior Hippocampus (CA1)','Right Mid Hippocampus - Posterior Hippocampus (Long Axis - parahippocampal border)'}
                 {'Left Amygdala - Anterior Hippocampus (Long Axis - Dentate Gyrus)','Left Mid Hippocampus - Posterior Hippocampus (Long Axis)','Right Amygdala - Anterior Hippocampus (Long Axis - subiculum)','Right Mid Hippocampus - Posterior Hippocampus (Long Axis- parahippocampal border)'}
             ];
-
-            %List of predictor variables available for analysis. When new
-            %predictors are added, this list needs to be updated
-            obj.PredList = [...
-                {'xs','gz','kd','am','ed','pe1','pe2','pe3','pe4','gy','ex'};...
-                {'Vel','Fix','KDE','Amb','Eda','PeT','PeA','PeBl','PeBh','HeadTurn','FooofEx'}];
-
-            %List of ylimits for predictor variables. This is used to
-            %adjust ylim of predictor overlay plots in
-            %plotMultTransSpecGramPerm.
-            obj.PredYlim = [[0,1.5];[0,1];[1,7];[0,500];[-0.2,0.5];[0,0.3];...
-                [0,0.3];[0,0.3];[0,0.3];[0,40];[0.9,1.1]];
-
-            %Scale factor for generating list of y offsets for plotting a
-            %raster of zscored predictor variables.
-            obj.PredYscale = 5;
 
             %Finding regions
             obj.RegionTable = [];
@@ -246,7 +202,6 @@ classdef RWAnalysis2 < handle
             p.fidx = []; %index into list of freq bins
             p.ftype = ''; %Theta, Alpha, Beta, Gamma, HG (plotMultInOutFreq)
             p.saveflag = false;
-            p.savepath = ''; %directory for saving files
             p.permtype = ''; %standard, zscore (use with plotMultTransSpecGramPerm)
             p.correctiontype = ''; %cluster, pixel, fdr (use with plotMultTransSpecGramPerm)
             p.pval = 0.05; %pval for specgrams
@@ -262,8 +217,6 @@ classdef RWAnalysis2 < handle
             p.plotfooofcomp = false; %boxplot comparison of fooof exponenet across trials for x-values of the two rectangular regions (y-value or freq is not constrained)
             p.boxcomprng = []; %rows are box1/box2, cols are time/freq limits for each box
             p.predtype = ''; %predictor type -> Vel, Fix, KDE, Amb, EDA (plotMultInOutPred)
-            p.predidxs = []; %vector of indices for overlay plot of predictors in plotMultTransSpecGramPerm
-            p.predabs = false; %perform abs of predictor values (only head turn for now) before taking mean
             p.veltype = ''; %VelHigh, VelLow, VelHighTercile, VelMidTercile, VelLowTercile
             p.rmoverlap = false; %remove overlapping trials
             p.rmoutliers = false; %remove outliers in in/out boxplot data
@@ -314,7 +267,7 @@ classdef RWAnalysis2 < handle
 
             %[notchB,notchA] = iirnotch(60/125,0.012);
             
-            obj.DTable = cell(TotalWalks,35);
+            obj.DTable = cell(TotalWalks,31);
             for k=1:TotalWalks
                 fprintf('Loading patient %s walk %d...\n',obj.PatientID,k);
                 
@@ -591,70 +544,6 @@ classdef RWAnalysis2 < handle
                             end
                         end %if IMU
 
-                        %%%%%%%%%%%% Full Walk Fooof %%%%%%%%%%%%%%%%%%%%%
-                        if isempty(obj.MultTable)
-                            fprintf('Calculating fooof for %s walk %d\n',obj.PatientID,k)
-                            d = SS.d_np; nan_idx = isnan(d); d(nan_idx) = 0;
-
-                            ntime = size(d,1);
-                            winsamp = obj.WinSegSec*SS.fs_np; %window size in samples (2sec@250Hz -> 500)
-                            stepsamp = winsamp/10; %number of samples to step (50)
-                            win = -winsamp/2:winsamp/2; %zero-centered vector of window indices
-                            stp = winsamp/2+1:stepsamp:ntime; %step indices adjusted so 1st sample is 1 when added to win
-                            T = win+stp'; %matrix of indices for each window through time (windows x time indices)
-                            rm_idx = any(T>ntime,2); %removing any indices that exceed length of data
-                            stp(rm_idx) = [];
-                            T(rm_idx,:) = [];
-                            nseg = size(T,1); %number of windows
-
-                            %multitaper params
-                            cparams.Fs = SS.fs_np; %250
-                            cparams.trialave = 0;
-                            cparams.tapers = [5,9];
-                            cparams.fpass = [2,120];
-                            cparams.pad = 0;
-
-                            %fooof params
-                            fparams.max_n_peaks = 3; %aperiodic component has a better fit if more peaks are removed
-                            fparams.aperiodic_mode = 'fixed'; %'knee' (testing this 20250721), 'fixed' (default)
-                            fparams.peak_width_limits = [1,12];
-                            flabels = {'peak_freq','peak_height','peak_width','aperiodic_offset','aperiodic_exponent','fit_rsquared','fit_error'};
-
-                            FR = nan(nseg,length(flabels),4); %num windows x params x chan
-                            parfor m=1:nseg %by segment
-                                [S,f] = mtspectrumc(d(T(m,:),:),cparams); S = S'; %chan x freq
-                                for n=1:4 %by chan
-                                    if ~any(nan_idx(T(m,:),n))
-                                        fr = fooof(f,S(n,:),[f(1),85],fparams,1); %fr.peak_params = [freq, height (aperiodic removed), width] (85Hz matches upper lim in plotMultTransSpecGramPerm)
-                                        if isempty(fr.peak_params)
-                                            pkp = nan(1,3);
-                                        else
-                                            [~,midx] = max(fr.peak_params(:,2)); %find the highest peak
-                                            pkp = fr.peak_params(midx,:);
-                                        end
-                                        switch fparams.aperiodic_mode
-                                            case 'fixed'
-                                                FR(m,:,n) = [pkp,fr.aperiodic_params,fr.r_squared,fr.error];
-                                            case 'knee'
-                                                FR(m,:,n) = [pkp,fr.aperiodic_params([1,3]),fr.r_squared,fr.error];
-                                        end
-                                    end
-                                end
-                            end
-                            obj.DTable(k,32) = {FR}; %fooof params over time at 5Hz sampling with 2sec window
-                            obj.DTable(k,33) = {SS.ntp_np(stp)};
-                            obj.DTable(k,34) = {SS.fs_np/stepsamp}; %fs=5Hz
-                            obj.DTable(k,35) = {flabels};
-                        else
-                            fprintf('Loading fooof from MultTable for %s walk %d to save time\n',obj.PatientID,k)
-                            dtable = obj.MultTable{obj.PatientIdx};
-                            obj.DTable(k,32) = dtable.d_fof(WalkNum);
-                            obj.DTable(k,33) = dtable.ntp_fof(WalkNum);
-                            obj.DTable(k,34) = {dtable.fs_fof(WalkNum)};
-                            obj.DTable(k,35) = {dtable.f_fof(WalkNum,:)};
-                        end
-                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
                         ptnum = str2double(regexp(obj.PatientID,'\d+$','match','once'));
 
                         SS.evnts_tbl =  addvars(SS.evnts_tbl,repmat(ptnum,size(SS.evnts_tbl,1),1),'NewVariableNames','Patient','Before','Event');
@@ -692,7 +581,6 @@ classdef RWAnalysis2 < handle
                 'd_bio','ntp_bio','fs_bio',...
                 'd_pep','ntp_pep','fs_pep','f_pep',...
                 'd_imu','ntp_imu','fs_imu',...
-                'd_fof','ntp_fof','fs_fof','f_fof',...
                 });
 
         end %loadData
@@ -700,34 +588,20 @@ classdef RWAnalysis2 < handle
         function loadVid(obj,varargin)
             %Load pupil video for current walk. If video is already loaded,
             %will not reload to save time.
-            if nargin>1
-                pt = varargin{1};
-                wlknums = varargin{2};
-                wlknames = cell(1,length(wlknums));
-                for k=1:length(wlknums)
-                    wlknames{k} = ['Walk',num2str(wlknums(k))];
-                end
-            else
-                pt = obj.PatientIdx;
-                wlknums = obj.WalkNums;
-                wlknames = obj.WalkNames;
-            end
-            ptid = ['RW',num2str(pt)];
-
             RunFlag = false;
             if isempty(obj.Vid)
                 RunFlag = true;
             else
-                if any(pt~=obj.Vid.Patient)
+                if any(obj.PatientIdx~=obj.Vid.Patient)
                     RunFlag = true;
                 end
             end
             if RunFlag
                 obj.Vid = [];
-                for k=1:length(wlknums)
-                    fprintf('Loading video for walk %0.0f...\n',wlknums(k));
-                    Files = findRWAFiles(fullfile('\\155.100.91.44\D\Data\RealWorldNavigationCory',ptid,'Original',wlknames{wlknums(k)}));
-                    obj.Vid = vertcat(obj.Vid,table(pt,wlknums(k),{VideoReader(Files.pupil_vid_file)},'variablenames',{'Patient','Walk','VidObj'}));
+                for k=1:length(obj.WalkNums)
+                    fprintf('Loading video for walk %0.0f...\n',obj.WalkNums(k));
+                    Files = findRWAFiles(fullfile('\\155.100.91.44\D\Data\RealWorldNavigationCory',obj.PatientID,'Original',obj.WalkNames{obj.WalkNums(k)}));
+                    obj.Vid = vertcat(obj.Vid,table(obj.PatientIdx,obj.WalkNums(k),{VideoReader(Files.pupil_vid_file)},'variablenames',{'Patient','Walk','VidObj'}));
                 end
             end
         end
@@ -799,7 +673,6 @@ classdef RWAnalysis2 < handle
             DT_bi = []; DT_bi_idx = []; %biopac
             DT_pe = []; DT_pe_idx = []; %bosc pepisode
             DT_im = []; DT_im_idx = []; %imu
-            DT_fo = []; DT_fo_idx = []; %fooof
             EvntTrans = {}; %event type
             DescTrans = {}; %event description
             WalkNumTrans = []; %walk number for transitions
@@ -864,12 +737,6 @@ classdef RWAnalysis2 < handle
                 fs_im = obj.DTable.fs_imu(m);
                 f_im = fieldnames(obj.DTable.d_imu(m));
 
-                %fooof
-                d_fo = obj.DTable.d_fof{m};
-                ntp_fo = obj.DTable.ntp_fof{m}; %ntp in sec
-                fs_fo = obj.DTable.fs_fof(m);
-                f_fo = obj.DTable.f_fof(m,:);
-
                 %12sec window around transition
                 win_trans_sec = obj.WinTransSec; %sec
                 ntp = dbb.NTP; %all transitions types
@@ -884,7 +751,6 @@ classdef RWAnalysis2 < handle
                 win_trans_bi = (-win_trans_sec*fs_bi:win_trans_sec*fs_bi); d_bi_trans = nan(length(win_trans_bi),length(ntp),8); d_bi_trans_idx = nan(length(ntp),1);
                 win_trans_pe = (-win_trans_sec*fs_pe:win_trans_sec*fs_pe); d_pe_trans = nan(length(win_trans_pe),length(ntp),size(f_pe,1),4); d_pe_trans_idx = nan(length(ntp),1);
                 win_trans_im = (-win_trans_sec*fs_im:win_trans_sec*fs_im); d_im_trans = nan(length(win_trans_im),length(ntp),length(f_im)); d_im_trans_idx = nan(length(ntp),1);
-                win_trans_fo = (-win_trans_sec*fs_fo:win_trans_sec*fs_fo); d_fo_trans = nan(length(win_trans_fo),length(ntp),length(f_fo),4); d_fo_trans_idx = nan(length(ntp),1);
                 t_xs = win_trans_xs./fs_xs; %for velocity change calculation
                 t_xs_idx = t_xs>-5 & t_xs<5; %only focus on change in vel for +-5sec
                 d_xs_vchg = nan(length(ntp),1); %percent velocity change
@@ -990,17 +856,6 @@ classdef RWAnalysis2 < handle
                             fprintf('Trans segment %0.0f for walk %0.0f is out of range of imu data. Filling with NaNs.\n',k,walknum);
                         end
                     end
-
-                    %fooof
-                    [~,midx] = min(abs(ntp_fo-ntp(k)));
-                    if ~isempty(midx)
-                        if (midx+win_trans_fo(1))>=1 && (midx+win_trans_fo(end))<=size(d_fo,1)
-                            d_fo_trans_idx(k) = midx;
-                            d_fo_trans(:,k,:,:) = d_fo(midx+win_trans_fo,:,:);
-                        else
-                            fprintf('Trans segment %0.0f for walk %0.0f is out of range of fooof data. Filling with NaNs.\n',k,walknum);
-                        end
-                    end
                 end %ntp loop
                 DT_np = cat(2,DT_np,d_np_trans);
                 DT_np_idx = cat(1,DT_np_idx,d_np_trans_idx);
@@ -1021,8 +876,6 @@ classdef RWAnalysis2 < handle
                 DT_pe_idx = cat(1,DT_pe_idx,d_pe_trans_idx);
                 DT_im = cat(2,DT_im,d_im_trans);
                 DT_im_idx = cat(1,DT_im_idx,d_im_trans_idx);
-                DT_fo = cat(2,DT_fo,d_fo_trans);
-                DT_fo_idx = cat(1,DT_fo_idx,d_fo_trans_idx);
                 EvntTrans = cat(1,EvntTrans,evnt);
                 DescTrans = cat(1,DescTrans,desc);
                 WalkNumTrans = cat(1,WalkNumTrans,ones(size(d_np_trans,2),1).*walknum);
@@ -1049,8 +902,6 @@ classdef RWAnalysis2 < handle
             obj.DParsed.Trans.DT_pe_idx = DT_pe_idx;
             obj.DParsed.Trans.DT_im = DT_im;
             obj.DParsed.Trans.DT_im_idx = DT_im_idx;
-            obj.DParsed.Trans.DT_fo = DT_fo;
-            obj.DParsed.Trans.DT_fo_idx = DT_fo_idx;
             obj.DParsed.Trans.WT_np_samp = win_trans_np;
             obj.DParsed.Trans.WT_np_sec = win_trans_np/fs_np;
             obj.DParsed.Trans.WT_xs_samp = win_trans_xs;
@@ -1069,8 +920,6 @@ classdef RWAnalysis2 < handle
             obj.DParsed.Trans.WT_pe_sec = win_trans_pe/fs_pe;
             obj.DParsed.Trans.WT_im_samp = win_trans_im;
             obj.DParsed.Trans.WT_im_sec = win_trans_im/fs_im;
-            obj.DParsed.Trans.WT_fo_samp = win_trans_fo;
-            obj.DParsed.Trans.WT_fo_sec = win_trans_fo/fs_fo;
             obj.DParsed.Trans.FS_np = fs_np;
             obj.DParsed.Trans.FS_xs = fs_xs;
             obj.DParsed.Trans.FS_gz = fs_gz;
@@ -1083,9 +932,7 @@ classdef RWAnalysis2 < handle
             obj.DParsed.Trans.FS_pe = fs_pe;
             obj.DParsed.Trans.F_pe = f_pe; %freq vector for pepisode
             obj.DParsed.Trans.FS_im = fs_im;
-            obj.DParsed.Trans.F_im = f_im; %field names for imu data
-            obj.DParsed.Trans.FS_fo = fs_fo;
-            obj.DParsed.Trans.F_fo = f_fo; %field names for fooof data
+            obj.DParsed.Trans.F_im = f_im; %field names for biopac data
             obj.DParsed.Trans.EvntTrans = EvntTrans;
             obj.DParsed.Trans.DescTrans = DescTrans;
             obj.DParsed.Trans.WalkNumTrans = WalkNumTrans;
@@ -1104,8 +951,7 @@ classdef RWAnalysis2 < handle
             %%%%%%%%%%%%%%%%% Transitions %%%%%%%%%%%%%%%%
             DT_np = []; DT_np_idx = []; DT_xs_idx = []; DT_xs_vchg = [];
             DT_gz_idx = []; DT_am_idx = []; DT_kd_idx = []; DT_wv_idx = [];
-            DT_bi_idx = []; DT_bi_flds = {}; DT_pe_idx = []; 
-            DT_im_idx = []; DT_im_flds = {}; DT_fo_idx = []; DT_fo_flds = {};
+            DT_bi_idx = []; DT_bi_flds = {}; DT_pe_idx = []; DT_im_idx = []; DT_im_flds = {};
             DT_Walk = []; DT_Evnt = []; DT_Desc = []; DT_StopWalk = []; 
             DT_GoWalk = []; DT_OL = []; DT_Region = []; DT_RegionLabel = []; DT_NSamp = []; %number of data samples in walk
             DT_Chan = []; DT_ChanLabel = []; DT_Patient = []; 
@@ -1136,7 +982,6 @@ classdef RWAnalysis2 < handle
                 dt_bi_idx = permute(repmat(obj.DParsed.Trans.DT_bi_idx(:),1,4),[3,1,2]); %1 x trial x chan
                 dt_pe_idx = permute(repmat(obj.DParsed.Trans.DT_pe_idx(:),1,4),[3,1,2]); %1 x trial x chan
                 dt_im_idx = permute(repmat(obj.DParsed.Trans.DT_im_idx(:),1,4),[3,1,2]); %1 x trial x chan
-                dt_fo_idx = permute(repmat(obj.DParsed.Trans.DT_fo_idx(:),1,4),[3,1,2]); %1 x trial x chan
                 dt_walk = permute(repmat(obj.DParsed.Trans.WalkNumTrans(:),1,4),[3,1,2]); %1 x trial x chan
                 dt_nsamp = permute(repmat(obj.DParsed.Trans.NumSampTrans(:),1,4),[3,1,2]); %1 x trial x chan
                 dt_evnt = permute(repmat(obj.DParsed.Trans.EvntTrans(:),1,4),[3,1,2]); %1 x trial x chan
@@ -1163,9 +1008,7 @@ classdef RWAnalysis2 < handle
                 DT_bi_flds = cat(1,DT_bi_flds,obj.DParsed.Trans.F_bi);
                 DT_pe_idx = cat(2,DT_pe_idx,dt_pe_idx);
                 DT_im_idx = cat(2,DT_im_idx,dt_im_idx);
-                DT_im_flds = cat(1,DT_im_flds,obj.DParsed.Trans.F_im');
-                DT_fo_idx = cat(2,DT_fo_idx,dt_fo_idx);
-                DT_fo_flds = cat(1,DT_fo_flds,obj.DParsed.Trans.F_fo);
+                DT_im_flds = cat(1,DT_im_flds,obj.DParsed.Trans.F_im);
                 DT_Walk = cat(2,DT_Walk,dt_walk);
                 DT_NSamp = cat(2,DT_NSamp,dt_nsamp); %number of data samples in walk
                 DT_Evnt = cat(2,DT_Evnt,dt_evnt);
@@ -1281,7 +1124,7 @@ classdef RWAnalysis2 < handle
 
                 %fooof params
                 ds_settings.max_n_peaks = 3; %aperiodic component has a better fit if more peaks are removed
-                ds_settings.aperiodic_mode = 'fixed'; %'fixed' (default), 'knee' (trying this 20250721)
+                ds_settings.aperiodic_mode = 'fixed';
                 ds_settings.peak_width_limits = [1,12];
                 ds_flabels = {'peak_freq','peak_height','peak_width','aperiodic_offset','aperiodic_exponent','fit_rsquared','fit_error'};
 
@@ -1302,12 +1145,7 @@ classdef RWAnalysis2 < handle
                             [~,midx] = max(ds_fr.peak_params(:,2)); %find the highest peak
                             ds_pkp = ds_fr.peak_params(midx,:);
                         end
-                        switch ds_settings.aperiodic_mode
-                            case 'fixed'
-                                ds_FR(n,:) = [ds_pkp,ds_fr.aperiodic_params,ds_fr.r_squared,ds_fr.error];
-                            case 'knee'
-                                ds_FR(n,:) = [ds_pkp,ds_fr.aperiodic_params([1,3]),ds_fr.r_squared,ds_fr.error];
-                        end
+                        ds_FR(n,:) = [ds_pkp,ds_fr.aperiodic_params,ds_fr.r_squared,ds_fr.error];
                     end
 
                     ds_wv = nan(ds_nseg,ds_nband);
@@ -1347,14 +1185,14 @@ classdef RWAnalysis2 < handle
                         ds_xs_norm,ds_gz_norm,ds_am_norm,ds_kd_norm,ds_ed_norm,ds_gy_norm,...
                         ds_wv_norm(:,1),ds_wv_norm(:,2),ds_wv_norm(:,3),ds_wv_norm(:,4),ds_wv_norm(:,5),...
                         ds_mt_norm(:,1),ds_mt_norm(:,2),ds_mt_norm(:,3),ds_mt_norm(:,4),ds_mt_norm(:,5),...
-                        ds_pe_norm(:,1),ds_pe_norm(:,2),ds_pe_norm(:,3),ds_pe_norm(:,4),...
+                        ds_pe_norm(:,1),ds_pe_norm(:,2),ds_pe_norm(:,3),...
                         ds_FR(:,1),ds_FR(:,2),ds_FR(:,3),ds_FR(:,4),ds_FR(:,5),ds_FR(:,6),ds_FR(:,7),...
                         'VariableNames',...
                         {'Pt','Chan','Walk','StopWalk','GoWalk','InFlag','RegionNum','RegionLabel','ChanLabel',...
                         'Vel','Fix','Amb','KDE','EDA','HeadTurn',...
                         'wvTheta','wvAlpha','wvBeta','wvGamma','wvHG',...
                         'mtTheta','mtAlpha','mtBeta','mtGamma','mtHG',...
-                        'peTheta','peAlpha','peBetaL','peBetaH',...
+                        'peTheta','peAlpha','peBeta',...
                         ds_flabels{1},ds_flabels{2},ds_flabels{3},ds_flabels{4},ds_flabels{5},ds_flabels{6},ds_flabels{7},...
                         });
 
@@ -1377,7 +1215,6 @@ classdef RWAnalysis2 < handle
             DT_bi_idx = reshape(DT_bi_idx,1,[]);
             DT_pe_idx = reshape(DT_pe_idx,1,[]);
             DT_im_idx = reshape(DT_im_idx,1,[]);
-            DT_fo_idx = reshape(DT_fo_idx,1,[]);
             DT_Walk = reshape(DT_Walk,1,[]);
             DT_NSamp = reshape(DT_NSamp,1,[]); %number of data samples in walk
             DT_Evnt = reshape(DT_Evnt,1,[]);
@@ -1401,7 +1238,6 @@ classdef RWAnalysis2 < handle
             obj.MultTrans.DT_bi_idx = DT_bi_idx;
             obj.MultTrans.DT_pe_idx = DT_pe_idx;
             obj.MultTrans.DT_im_idx = DT_im_idx;
-            obj.MultTrans.DT_fo_idx = DT_fo_idx;
             obj.MultTrans.Walk = DT_Walk;
             obj.MultTrans.NSamp = DT_NSamp;
             obj.MultTrans.Evnt = DT_Evnt;
@@ -1433,8 +1269,6 @@ classdef RWAnalysis2 < handle
             obj.MultTrans.TimeSec_pe = obj.DParsed.Trans.WT_pe_sec;
             obj.MultTrans.TimeSamp_im = obj.DParsed.Trans.WT_im_samp;
             obj.MultTrans.TimeSec_im = obj.DParsed.Trans.WT_im_sec;
-            obj.MultTrans.TimeSamp_fo = obj.DParsed.Trans.WT_fo_samp;
-            obj.MultTrans.TimeSec_fo = obj.DParsed.Trans.WT_fo_sec;
             obj.MultTrans.FS_np = obj.DParsed.Trans.FS_np;
             obj.MultTrans.FS_xs = obj.DParsed.Trans.FS_xs;
             obj.MultTrans.FS_gz = obj.DParsed.Trans.FS_gz;
@@ -1444,10 +1278,8 @@ classdef RWAnalysis2 < handle
             obj.MultTrans.FS_bi = obj.DParsed.Trans.FS_bi;
             obj.MultTrans.FS_pe = obj.DParsed.Trans.FS_pe;
             obj.MultTrans.FS_im = obj.DParsed.Trans.FS_im;
-            obj.MultTrans.FS_fo = obj.DParsed.Trans.FS_fo;
             obj.MultTrans.F_bi = DT_bi_flds;
             obj.MultTrans.F_im = DT_im_flds;
-            obj.MultTrans.F_fo = DT_fo_flds;
             obj.MultTrans.F_pe = obj.DParsed.Trans.F_pe; %freq bands for pepisode
             obj.MultTrans.Freq = obj.DParsed.Trans.F_wv; %freq vector (same for all datasets)
             obj.MultTrans.WinSegSec = obj.WinSegSec; %Also smoothing kernel for specgrams in trans analysis
@@ -1502,7 +1334,7 @@ classdef RWAnalysis2 < handle
             obj.MultSeg.f_band = ds_f_band;
             obj.MultSeg.f_band_pe = obj.DParsed.Seg.F_pe;
             obj.MultSeg.f_lbls = {'Theta','Alpha','Beta','Gamma','HG'}; %freq band labels
-            obj.MultSeg.f_lbls_pe = {'Theta','Alpha','LowBeta','HighBeta'}; %freq band labels
+            obj.MultSeg.f_lbls_pe = {'Theta','Alpha','Beta'}; %freq band labels
             obj.MultSeg.p_lbls = {'Vel','Fix','Amb','KDE','EDA'}; %predictor labels
             obj.MultSeg.WinSegSec = obj.WinSegSec; %Also smoothing kernel for specgrams in trans analysis
             obj.MultSeg.WinTransSec = obj.WinTransSec;
@@ -1638,7 +1470,6 @@ classdef RWAnalysis2 < handle
             bi_idx = obj.MultTrans.DT_bi_idx(transidx);
             pe_idx = obj.MultTrans.DT_pe_idx(transidx);
             im_idx = obj.MultTrans.DT_im_idx(transidx);
-            fo_idx = obj.MultTrans.DT_fo_idx(transidx);
             pt = obj.MultTrans.Patient(transidx);
             rg = obj.MultTrans.Region(transidx); %region number 1=AntHipp, 2=LatTemp, 3=Ent+Peri, 4=PostHipp+Para
             wk = obj.MultTrans.Walk(transidx);
@@ -1651,10 +1482,10 @@ classdef RWAnalysis2 < handle
             ds = obj.MultTrans.Desc(transidx);
             ds_idx = descidx(transidx);
             MT = table(pt',wk',swk',gwk',rg',lb',ch',np_idx',ns',ev',ds',ds_idx',...
-                xs_idx',xs_vchg',gz_idx',am_idx',kd_idx',wv_idx',bi_idx',pe_idx',im_idx',fo_idx',...
+                xs_idx',xs_vchg',gz_idx',am_idx',kd_idx',wv_idx',bi_idx',pe_idx',im_idx',...
                 'VariableNames',{'patient','walk','stopwalk','gowalk','regionnum',...
                 'regionlabel','chan','npidx','nsamp','evnt','desc','descidx',...
-                'xsidx','xsvchg','gzidx','amidx','kdidx','wvidx','biidx','peidx','imidx','foidx'});
+                'xsidx','xsvchg','gzidx','amidx','kdidx','wvidx','biidx','peidx','imidx'});
 
             %filter by region (amygdala/anterior hipp)
             if all(regionidx<5)
@@ -1852,12 +1683,6 @@ classdef RWAnalysis2 < handle
             ntime_im = length(tsamp_im);
             flds_im = obj.MultTrans.F_im;
             nflds_im = size(flds_im,2); %8 fields of data
-
-            tsamp_fo = round(transrng(1)*obj.MultTrans.FS_fo):round(transrng(2)*obj.MultTrans.FS_fo);
-            tsec_fo = tsamp_fo./obj.MultTrans.FS_fo;
-            ntime_fo = length(tsamp_fo);
-            flds_fo = obj.MultTrans.F_fo;
-            nflds_fo = size(flds_fo,2); %7 fields of data
             
             [uPtWkCh,~,uPtWkChIdx] = unique(obj.MultTrans.MT(:,{'patient','walk','chan'}));
             
@@ -1869,8 +1694,7 @@ classdef RWAnalysis2 < handle
             d_wv = nan(size(uPtWkChIdx,1),ntime_wv,nfreq_wv);
             d_ed = nan(size(uPtWkChIdx,1),ntime_bi);
             d_pe = nan(size(uPtWkChIdx,1),ntime_pe,nfreq_pe);
-            d_gy = nan(size(uPtWkChIdx,1),ntime_im); %head turn (angular vel)
-            d_ex = nan(size(uPtWkChIdx,1),ntime_fo); %fooof exponent
+            d_gy = nan(size(uPtWkChIdx,1),ntime_im);
             for k=1:size(uPtWkCh,1)
                 idx = find(k==uPtWkChIdx);
                 mt = obj.MultTrans.MT(idx,:);
@@ -1887,7 +1711,6 @@ classdef RWAnalysis2 < handle
                 biidx = round(mt.biidx)+tsamp_bi;
                 peidx = round(mt.peidx)+tsamp_pe;
                 imidx = round(mt.imidx)+tsamp_im;
-                foidx = round(mt.foidx)+tsamp_fo;
 
                 %NP
                 if ~isempty(obj.MultTable{pt}.d_np{wk})
@@ -1970,15 +1793,6 @@ classdef RWAnalysis2 < handle
                     d_gy(idx(~ridx),:) = d; %trial x time
                 end
 
-                %fooof exponent
-                if ~isempty(obj.MultTable{pt}.d_fof(wk))
-                    d = obj.MultTable{pt}.d_fof{wk}(:,contains(obj.MultTrans.F_fo(pt,:),'exponent'),ch); 
-                    ridx = any(foidx<1,2)|any(foidx>size(d,1),2)|any(isnan(mt.foidx),2); %remove index
-                    foidx(ridx,:) = [];
-                    d = reshape(d(foidx,:),size(foidx,1),size(foidx,2));
-                    d_ex(idx(~ridx),:) = d; %trial x time
-                end
-
             end
             d_np = permute(d_np,[2,1]);
             d_xs = permute(d_xs,[2,1]);
@@ -1989,7 +1803,6 @@ classdef RWAnalysis2 < handle
             d_ed = permute(d_ed,[2,1]); %time x trial
             d_pe = permute(d_pe,[2,3,1]); %time x freq x trial
             d_gy = permute(d_gy,[2,1]); %time x trial
-            d_ex = permute(d_ex,[2,1]);
 
             obj.MultTrans.MTd = [];
 
@@ -2001,11 +1814,9 @@ classdef RWAnalysis2 < handle
             obj.MultTrans.MTd.d_wv = d_wv;
             obj.MultTrans.MTd.d_ed = d_ed;
             obj.MultTrans.MTd.d_gy = d_gy;
-            obj.MultTrans.MTd.d_ex = d_ex;
             obj.MultTrans.MTd.d_pe1 = squeeze(d_pe(:,1,:)); %theta
             obj.MultTrans.MTd.d_pe2 = squeeze(d_pe(:,2,:)); %alpha
-            obj.MultTrans.MTd.d_pe3 = squeeze(d_pe(:,3,:)); %lowbeta
-            obj.MultTrans.MTd.d_pe4 = squeeze(d_pe(:,4,:)); %highbeta
+            obj.MultTrans.MTd.d_pe3 = squeeze(d_pe(:,3,:)); %gamma
 
             obj.MultTrans.MTd.tsec_np = tsec_np;
             obj.MultTrans.MTd.tsec_xs = tsec_xs;
@@ -2015,11 +1826,9 @@ classdef RWAnalysis2 < handle
             obj.MultTrans.MTd.tsec_wv = tsec_wv;
             obj.MultTrans.MTd.tsec_ed = tsec_bi;
             obj.MultTrans.MTd.tsec_gy = tsec_im;
-            obj.MultTrans.MTd.tsec_ex = tsec_fo;
             obj.MultTrans.MTd.tsec_pe1 = tsec_pe;
             obj.MultTrans.MTd.tsec_pe2 = tsec_pe;
             obj.MultTrans.MTd.tsec_pe3 = tsec_pe;
-            obj.MultTrans.MTd.tsec_pe4 = tsec_pe;
 
             obj.MultTrans.MTd.tsamp_np = tsamp_np;
             obj.MultTrans.MTd.tsamp_xs = tsamp_xs;
@@ -2029,11 +1838,9 @@ classdef RWAnalysis2 < handle
             obj.MultTrans.MTd.tsamp_wv = tsamp_wv;
             obj.MultTrans.MTd.tsamp_ed = tsamp_bi;
             obj.MultTrans.MTd.tsamp_gy = tsamp_im;
-            obj.MultTrans.MTd.tsamp_ex = tsamp_fo;
             obj.MultTrans.MTd.tsamp_pe1 = tsamp_pe;
             obj.MultTrans.MTd.tsamp_pe2 = tsamp_pe;
             obj.MultTrans.MTd.tsamp_pe3 = tsamp_pe;
-            obj.MultTrans.MTd.tsamp_pe4 = tsamp_pe;
 
             obj.MultTrans.MTd.freq_wv = freq_wv;
             obj.MultTrans.MTd.freq_pe = freq_pe;
@@ -2603,8 +2410,7 @@ classdef RWAnalysis2 < handle
                 for k=1:totalwalks
                     fname = sprintf('RWNApp_%s_Walk%0.0f.mat',patientid,walknums(k));
                     src = fullfile(rootdir,obj.PatientList{m},walknames{k},fname);
-                    % dst = fullfile('\\155.100.91.44\D\Tyler\RealWorld',fname);
-                    dst = fullfile('D:\RWN',fname);
+                    dst = fullfile('\\155.100.91.44\D\Tyler\RealWorld',fname);
                     if isfile(src) && isfolder(fileparts(dst))
                         [status,msg] = copyfile(src,dst);
                         if ~status
@@ -2637,7 +2443,7 @@ classdef RWAnalysis2 < handle
                 else
                     analysisfile = obj.AnalysisFile;
                 end
-                disp('Loading data for multiple patients from file...')
+                disp("Loading data for multiple patients from: "+ analysisfile)
                 MD = load(analysisfile,'multseg','multtrans','multtable');
                 if ~isempty(MD.multseg)
                     obj.MultSeg = MD.multseg;
@@ -2666,11 +2472,9 @@ classdef RWAnalysis2 < handle
             obj.FB.nt = size(obj.FB.D,1); %time
             obj.FB.nc = size(obj.FB.D,2); %channels
             obj.FB.t = (0:obj.FB.nt-1)/obj.FB.fs;
-            obj.FB.f_bands = [4,8;8,12;12,16;16,30]; %Theta,Alpha,LowBeta,HighBeta
-            % obj.FB.f_bands = [4,8;8,12;12,30]; %Theta,Alpha,Beta
+            obj.FB.f_bands = [4,8;8,12;12,30]; %Theta,Alpha,Beta
             % obj.FB.f_bands = [4,8;8,12;12,30;30,70;70,120]; %this takes about 10x longer!!
-            % obj.FB.f_band_lbls = {'theta','alpha','beta','gamma','hg'};
-            obj.FB.f_band_lbls = {'theta','alpha','low_beta','high_beta'};
+            obj.FB.f_band_lbls = {'theta','alpha','beta','gamma','hg'};
            
             obj.FB.data.label = {'chan1','chan2','chan3','chan4'};
             obj.FB.data.time = {obj.FB.t};
@@ -2688,12 +2492,11 @@ classdef RWAnalysis2 < handle
             obj.FB.cfg.fBOSC.pad.background_s  = 0.1;      % padding of segments for BG (only avoiding edge artifacts)
 
             % fooof parameters - fit with fixed line or allow a knee
-            obj.FB.cfg.fBOSC.fooof.aperiodic_mode    = 'fixed'; %old = eBOSC not fooof, 'fixed' or 'knee' (used fixed in getMultData for segments and in loadData for continuous -> testing knee 20250721 to keep same as fBosc)
+            obj.FB.cfg.fBOSC.fooof.aperiodic_mode    = 'knee'; %old = eBOSC not fooof
             obj.FB.cfg.fBOSC.fooof.version           = 'python'; %'matlab'
 
             % threshold settings
             obj.FB.cfg.fBOSC.threshold.duration	= repmat(10, 1, numel(obj.FB.cfg.fBOSC.F)); % vector of duration thresholds at each frequency (previously: ncyc, typically 3 cycles, 10 seems excessive?)
-            % obj.FB.cfg.fBOSC.threshold.duration	= repmat(3, 1, numel(obj.FB.cfg.fBOSC.F)); % 3 cycles doesn't show the lost beg dip as well as 10 cycles
             obj.FB.cfg.fBOSC.threshold.percentile  = .99;                              % percentile of background fit for power threshold
 
             % episode post-processing
@@ -2705,6 +2508,16 @@ classdef RWAnalysis2 < handle
             obj.FB.cfg.fBOSC.trial_background  = []; % select trials for background (default: all)
 
             [obj.FB.fBOSC, obj.FB.cfg] = fBOSC_wrapper(obj.FB.cfg, obj.FB.data);
+
+            %freq bands of interest
+            % ds_f_spec = obj.DParsed.Seg.F_wv;
+            % ds_f_band = [4,8;8,12;12,30;30,70;70,120]; %Theta,Alpha,Beta,Gamma,HG
+            % ds_nband = size(ds_f_band,1);
+            % ds_idx60 = (ds_f_spec>=59 & ds_f_spec<=61);
+            % ds_fidx = false(length(ds_f_spec),5);
+            % for n=1:ds_nband
+            %     ds_fidx(:,n) = (ds_f_spec>=ds_f_band(n,1) & ds_f_spec<ds_f_band(n,2)) & ~ds_idx60;
+            % end
 
             % collapsing detected oscillations to bands of interest
             t = obj.FB.t;
@@ -2757,13 +2570,70 @@ classdef RWAnalysis2 < handle
             MultTransSpecGramGUI(obj);
         end
 
-        function openMultSegGLMEGUI(obj,varargin)
-            MultSegGLMEGUI(obj);
+        function varargout = plotFooofGif(obj,varargin)
+            p = obj.parseInputs(varargin{:});
+            
+            if isempty(p.permtype)
+                error('permtype must be specified!');
+            end
+        
+            warning('off','MATLAB:contour:ConstantData');
+            
+            % transtype = p.transtype; %'Outdoor Beg', 'Outdoor End', 'Doorway'
+            % regiontype = p.regiontype; %'AntHipp','LatTemp','Ent+Peri','PostHipp+Para','All Chans','Custom'
+            % walktype = p.walktype; %'First Walks','Last Walks','Stop Walks','Go Walks','All Walks', '1,2,5'
+            % veltype = p.veltype; %'', 'High Change', 'Low Change'
+            % patienttype = p.patienttype; %'All Patients', '2,4'
+            % desctype = p.desctype; %close, open, etc. (optional, will skip if empty)
+            permtype = p.permtype; %standard, zscore
+            correctiontype = p.correctiontype; %cluster, pixel, fdr, fdr+cluster (if empty, cluster correction is skipped)
+            if strcmp(correctiontype,'fdr+cluster') && strcmp(permtype,'standard')
+                error('fdr+cluster cannot be performed with the standard permtype!');
+            end
+            transrng = p.transrng; %default [-10,10]
+            normrng = p.normrng; %default [-10,10] must be within transrng
+            if ~p.fullwalknorm
+                if normrng(1)<transrng(1) || normrng(2)>transrng(2) || normrng(2)<=normrng(1)
+                    error('normrng is incorrect!');
+                end
+            end
+            % pval = p.pval; %default p=0.05
+            % pvalclust = p.pvalclust; %default 0.01
+            % plottrials = p.plottrials;
+            % trialsfreqrng = p.trialsfreqrng;
+            % plotpowercomp = p.plotpowercomp;
+            % plotfooofcomp = p.plotfooofcomp;
+            boxcomprng = p.boxcomprng; %2x4 matrix where rows are each box and cols are low/high ranges for time/freq
+            % if isempty(p.clim)
+            %     switch permtype
+            %         case 'zscore'
+            %             climit = [-10,10];
+            %         case 'standard' %dB
+            %             climit = [-1,1];
+            %     end
+            % else
+            %     climit = p.clim;
+            % end
+        
+            %Getting trials and specgram data
+            obj.filterMultTransData(varargin{:}); %table of all trials and corresponding info (this creates MT and must be run before getFilteredMultTransData)
+            obj.getFilteredMultTransData(transrng); %raw power for all trials (time x freq x trial)
+        
+            %Init some params
+            % tsamp = obj.MultTrans.MTd.tsamp_wv; %+-10sec at 25Hz (downsampled by 10 from 250)
+            % tsec = obj.MultTrans.MTd.tsec_wv;
+            % baseidx = tsec>=normrng(1) & tsec<=normrng(2); %baseline (normalization) indices
+            % nperm = 1000; %permutations
+        
+            % pwr = obj.MultTrans.MTd.d_wv;
+            % tsec = obj.MultTrans.MTd.tsec_wv;
+            % freq = obj.MultTrans.MTd.freq_wv;
+            np = obj.MultTrans.MTd.d_np;
+            tsec_np = obj.MultTrans.MTd.tsec_np;
+            FooofPlotGif(np, tsec_np, boxcomprng);
+            
         end
 
-        function openSpecGramVideoGUI(obj,varargin)
-            SpecGramVideoGUI(obj);
-        end
 
         function varargout = plotMultTransSpecGramPerm(obj,varargin)
             %Plot specgram of transitions for all patients and channels
@@ -2837,6 +2707,8 @@ classdef RWAnalysis2 < handle
             freq = obj.MultTrans.MTd.freq_wv;
             np = obj.MultTrans.MTd.d_np;
             tsec_np = obj.MultTrans.MTd.tsec_np;
+
+            predlist = [{'xs','gz','kd','am','ed','pe1','pe2','pe3','gy'};{'Vel','Fix','KDE','Amb','Eda','PeT','PeA','PeB','HeadTurn'}];
 
             nfreq = length(freq);
             ntime = length(tsamp);
@@ -2953,75 +2825,48 @@ classdef RWAnalysis2 < handle
             %Plotting
             fH = figure('Position',[50,50,1200,800]);
             aH = axes('parent',fH);
-            fH.UserData.aH = aH;
             colormap("jet");
             contourf(tsec,freq,npwr',100,'linecolor','none','parent',aH);
             hold(aH,"on");
             contour(tsec,freq,(npwr_thresh~=0)',1,'parent',aH,'linecolor','w','linewidth',2);
             set(aH,'yscale','log','YTick',2.^(1:6),'yticklabel',2.^(1:6),'yminortick','off','clim',climit); %now in units of standard deviation
             plot(aH,[0,0],[2,120],'--k','LineWidth',2);
-            pH = nan(size(obj.PredList,2),4);
+            pH = nan(size(predlist,2),3);
             yyaxis(aH,'right');
-            predytick = -(0:size(obj.PredList,2)-1)*obj.PredYscale;
-            for k=1:size(obj.PredList,2) %xs,gz,kd,am,ed,pe1,pe2,pe3,gy,ex
-                dx = obj.MultTrans.MTd.(['d_',obj.PredList{1,k}]);
-                tx = obj.MultTrans.MTd.(['tsec_',obj.PredList{1,k}]);
-                %these predictors have outliers that need to be removed
-                %(binary data like gz/pe don't need outliers removed)
-                if contains(obj.PredList{1,k},["xs","am","ed"]) 
-                    dxx = dx(:,~isoutlier(mean(dx)));
-                else
+            for k=1:size(predlist,2) %xs,gz,kd,am,ed,pe1,pe2,pe3,gy
+                dx = obj.MultTrans.MTd.(['d_',predlist{1,k}]);
+                tx = obj.MultTrans.MTd.(['tsec_',predlist{1,k}]);
+                if contains(predlist{1,k},'pe') || contains(predlist{1,k},'gy')
                     dxx = dx;
-                end
-                if contains(obj.PredList{1,k},'ex') 
-                    dxx = dxx./mean(dxx,1,'omitnan'); %normalize fooof exponent
-                end
-                if p.predabs
-                    if contains(obj.PredList{1,k},'gy')
-                        dxx = abs(dxx); %make head turn all pos for now
-                    end
+                else
+                    dxx = dx(:,~isoutlier(mean(dx)));
                 end
                 dxx_me = mean(dxx,2,"omitnan");
-                dxx_zs = zscore(dxx_me);
                 dxx_se = 1.96*std(dxx,0,2,'omitnan')./sqrt(size(dxx,2)); %95ci
                 pH(k,1) = plot(aH,tx,dxx_me,'-k','LineWidth',2);
                 pH(k,2) = plot(aH,tx,dxx_me-dxx_se,':k','LineWidth',0.5);
                 pH(k,3) = plot(aH,tx,dxx_me+dxx_se,':k','LineWidth',0.5);
-                pH(k,4) = plot(aH,tx,dxx_zs,'-k','LineWidth',2);
             end  
-            fH.UserData.pH = pH;
-            set(pH,'visible','off');
-            if contains(p.predtype,'All')
-                if isempty(p.predidxs)
-                    predidxs = 1:size(obj.PredList,2);
-                end
-                pytick = predytick(1:length(predidxs));
-                plist = obj.PredList(2,predidxs);
-                for k=1:length(predidxs)
-                    idx = predidxs(k);
-                    ph = pH(idx,4);
-                    y = get(ph,'YData');
-                    y = y-mean(y);
-                    y = y+pytick(k);
-                    set(ph,'visible','on','ydata',y);
-                end
-                set(aH,'YTick',fliplr(pytick),'YTickLabel',fliplr(plist))
-                ylim(aH,[pytick(end)-obj.PredYscale,obj.PredYscale])
-                ylabel(aH,'');
-            else
-                predidx = strcmp(obj.PredList(2,:),p.predtype);
-                set(pH(predidx,1:3),'visible','on');
-                ylabel(aH,p.predtype);
-                if any(predidx)
-                    if contains(p.predtype,'HeadTurn') && ~p.predabs
-                        yl = obj.PredYlim(predidx,:);
-                        ylim(aH,[-yl(2),yl(2)]);
-                    else
-                        ylim(aH,obj.PredYlim(predidx,:));
-                    end
-                else
+            predidx = strcmp(predlist(2,:),p.predtype);
+            set(pH(~predidx,:),'visible','off');
+            ylabel(aH,p.predtype);
+            switch p.predtype %vel:0-1.5, gaze:0-1, kde:1-7, amb: 0-500, eda:-0.2-0.5, pe:0-1
+                case 'Vel'
+                    ylim(aH,[0,1.5])
+                case 'Fix'
+                    ylim(aH,[0,1])
+                case 'KDE'
+                    ylim(aH,[1,7])
+                case 'Amb'
+                    ylim(aH,[0,500])
+                case 'Eda'
+                    ylim(aH,[-0.2,0.5])
+                case {'PeT','PeA','PeB'}
+                    ylim(aH,[0,0.3])
+                case 'HeadTurn' 
+                    ylim(aH,[-40,40])
+                otherwise
                     aH.YAxis(2).Visible = 'off';
-                end
             end
             yyaxis(aH,'left');
             if plottrials
@@ -3191,90 +3036,61 @@ classdef RWAnalysis2 < handle
             fH4 = [];
             if plotfooofcomp
                 % setenv('KMP_DUPLICATE_LIB_OK', 'TRUE'); %this is permanently set in computer system settings
+                fbins = 2:0.2:85;
 
-                %%%%%% Calculates fooof using np data and wavelets %%%%%%%%
-                % fbins = 2:0.2:85;
-                % 
-                % tidx_box1_np = tsec_np>boxcomprng(1,1) & tsec_np<boxcomprng(1,2);
-                % tidx_box2_np = tsec_np>boxcomprng(2,1) & tsec_np<boxcomprng(2,2);
-                % 
-                % settings.max_n_peaks = 3; %aperiodic component has a better fit if more peaks are removed
-                % settings.aperiodic_mode = 'knee'; %fixed or knee (testing this out 20250721)
-                % 
-                % FPLabels = {'peak_freq','peak_height','peak_width','aperiodic_offset','aperiodic_exponent','fit_rsquared','fit_error'};
-                % 
-                % FP_box1 = nan(size(np,2),length(FPLabels));
-                % FP_box2 = nan(size(np,2),length(FPLabels));
-                % % wait_msg = parfor_wait(size(np,2));
+                tidx_box1_np = tsec_np>boxcomprng(1,1) & tsec_np<boxcomprng(1,2);
+                tidx_box2_np = tsec_np>boxcomprng(2,1) & tsec_np<boxcomprng(2,2);
+
+                settings.max_n_peaks = 3; %aperiodic component has a better fit if more peaks are removed
+                settings.aperiodic_mode = 'fixed';
+
+                FPLabels = {'peak_freq','peak_height','peak_width','aperiodic_offset','aperiodic_exponent','fit_rsquared','fit_error'};
+
+                FP_box1 = nan(size(np,2),length(FPLabels));
+                FP_box2 = nan(size(np,2),length(FPLabels));
+                % wait_msg = parfor_wait(size(np,2));
+                for k=1:size(np,2)
                 % parfor k=1:size(np,2)
-                %     % wait_msg.Send;
-                %     pwr_box1 = mean(abs(calcWavTF(np(tidx_box1_np,k),fbins,250)).^2,2);
-                %     pwr_box2 = mean(abs(calcWavTF(np(tidx_box2_np,k),fbins,250)).^2,2);
-                %     fr_box1 = fooof(fbins, pwr_box1, [fbins(1),fbins(end)], settings, 1); %fr.peak_params = [freq, height (aperiodic removed), width]
-                %     fr_box2 = fooof(fbins, pwr_box2, [fbins(1),fbins(end)], settings, 1); %fr.peak_params = [freq, height (aperiodic removed), width]
-                %     if isempty(fr_box1.peak_params)
-                %         pkp = nan(1,3);
-                %     else
-                %         [~,midx] = max(fr_box1.peak_params(:,2)); %find the highest peak
-                %         pkp = fr_box1.peak_params(midx,:);
-                %     end
-                %     if isempty(fr_box2.peak_params)
-                %         pkp = nan(1,3);
-                %     else
-                %         [~,midx] = max(fr_box2.peak_params(:,2)); %find the highest peak
-                %         pkp = fr_box2.peak_params(midx,:);
-                %     end
-                %     switch settings.aperiodic_mode
-                %         case 'fixed'
-                %             FP_box1(k,:) = [pkp,fr_box1.aperiodic_params,fr_box1.r_squared,fr_box1.error];
-                %             FP_box2(k,:) = [pkp,fr_box2.aperiodic_params,fr_box2.r_squared,fr_box2.error];
-                %         case 'knee'
-                %             FP_box1(k,:) = [pkp,fr_box1.aperiodic_params([1,3]),fr_box1.r_squared,fr_box1.error];
-                %             FP_box2(k,:) = [pkp,fr_box2.aperiodic_params([1,3]),fr_box2.r_squared,fr_box2.error];
-                %     end
-                % end
-                % % wait_msg.Destroy;
-                % 
-                % nFP_box12 = nan(size(FP_box1,1),2); %mean normalized across box1/box2 by patient/chan
-                % mFP_box12 = nan(size(uPtCh,1),2);
-                % for k=1:size(uPtCh,1)
-                %     idx = (uPtChIdx==k);
-                %     fp_box12 = [FP_box1(idx,5),FP_box2(idx,5)];
-                %     nfp_box12 = fp_box12./mean(fp_box12,2);
-                %     nFP_box12(idx,:) = nfp_box12;
-                %     mFP_box12(k,:) = mean(nfp_box12,1);
-                % end
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    % wait_msg.Send;
+                    pwr_box1 = mean(abs(calcWavTF(np(tidx_box1_np,k),fbins,250)).^2,2);
+                    pwr_box2 = mean(abs(calcWavTF(np(tidx_box2_np,k),fbins,250)).^2,2);
+                    fr_box1 = fooof(fbins, pwr_box1, [fbins(1),fbins(end)], settings, 1); %fr.peak_params = [freq, height (aperiodic removed), width]
+                    fr_box2 = fooof(fbins, pwr_box2, [fbins(1),fbins(end)], settings, 1); %fr.peak_params = [freq, height (aperiodic removed), width]
+                    if isempty(fr_box1.peak_params)
+                        pkp = nan(1,3);
+                    else
+                        [~,midx] = max(fr_box1.peak_params(:,2)); %find the highest peak
+                        pkp = fr_box1.peak_params(midx,:);
+                    end
+                    FP_box1(k,:) = [pkp,fr_box1.aperiodic_params,fr_box1.r_squared,fr_box1.error];
+                    if isempty(fr_box2.peak_params)
+                        pkp = nan(1,3);
+                    else
+                        [~,midx] = max(fr_box2.peak_params(:,2)); %find the highest peak
+                        pkp = fr_box2.peak_params(midx,:);
+                    end
+                    FP_box2(k,:) = [pkp,fr_box2.aperiodic_params,fr_box2.r_squared,fr_box2.error];
+                end
+                % wait_msg.Destroy;
 
-                %%%%%%%%%% Use already calculated full walk fooof %%%%%%%%%%%%%%%%
-                d_ex = obj.MultTrans.MTd.d_ex;
-                tsec_ex = obj.MultTrans.MTd.tsec_ex;
-
-                tidx_box1_ex = tsec_ex>boxcomprng(1,1) & tsec_ex<boxcomprng(1,2);
-                tidx_box2_ex = tsec_ex>boxcomprng(2,1) & tsec_ex<boxcomprng(2,2);
-
-                d_box1_ex = median(d_ex(tidx_box1_ex,:),1);
-                d_box2_ex = median(d_ex(tidx_box2_ex,:),1);
-
-                nFP_box12 = nan(ntrials,2); %mean normalized across box1/box2 by patient/chan
+                nFP_box12 = nan(size(FP_box1,1),2); %mean normalized across box1/box2 by patient/chan
                 mFP_box12 = nan(size(uPtCh,1),2);
                 for k=1:size(uPtCh,1)
                     idx = (uPtChIdx==k);
-                    fp_box12 = [d_box1_ex(idx);d_box2_ex(idx)]';
+                    fp_box12 = [FP_box1(idx,5),FP_box2(idx,5)];
                     nfp_box12 = fp_box12./mean(fp_box12,2);
                     nFP_box12(idx,:) = nfp_box12;
                     mFP_box12(k,:) = mean(nfp_box12,1);
                 end
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-                fH4 = figure('Position',[50,50,1600,550]);
+                fH4 = figure('Position',[50,50,1200,550]);
                 aH4 = [];
-                aH4(1) = subplot(1,3,1,'parent',fH4);
+                aH4(1) = subplot(1,2,1,'parent',fH4);
                 boxplot(aH4(1),nFP_box12,{'box1 (-.)','box2 (--)'})
                 [h,p,ci,stats] = ttest2(nFP_box12(:,1),nFP_box12(:,2));
                 ylabel(aH4(1),'Normalized Aperiodic Exponent (Fooof)')
                 title(aH4(1),sprintf('All Trials (p=%0.1e)',p))
-                aH4(2) = subplot(1,3,2,'parent',fH4);
+                aH4(2) = subplot(1,2,2,'parent',fH4);
                 boxplot(aH4(2),mFP_box12,{'box1 (-.)','box2 (--)'})
                 hold(aH4(2),'on');
                 for k=1:size(mFP_box12,1)
@@ -3288,42 +3104,23 @@ classdef RWAnalysis2 < handle
                 ylabel(aH4(2),'Normalized Aperiodic Exponent (Fooof)')
                 title(aH4(2),sprintf('Mean Across Patient/Region (p=%0.1e)\nPatient (r=1, g=2, b=3, c=4, m=5)\nRegion (o=anthip, +=lattemp, *=entperi, x=posthip)',p))
 
-                %plotting theta/gamma ratio
-                tidx_box1 = tsec>boxcomprng(1,1) & tsec<boxcomprng(1,2);
-                tidx_box2 = tsec>boxcomprng(2,1) & tsec<boxcomprng(2,2);
-                fidx_theta = freq>4 & freq<=8;
-                fidx_gamma = freq>30 & freq<=85;
-              
-                pwr_ratio_box1 = squeeze(mean(mean(pwr(tidx_box1,fidx_theta,:),1),2))./squeeze(mean(mean(pwr(tidx_box1,fidx_gamma,:),1),2)); 
-                pwr_ratio_box2 = squeeze(mean(mean(pwr(tidx_box2,fidx_theta,:),1),2))./squeeze(mean(mean(pwr(tidx_box2,fidx_gamma,:),1),2));
-
-                mpwr_ratio_box1 = nan(size(uPtCh,1),1);
-                mpwr_ratio_box2 = nan(size(uPtCh,1),1);
-                for k=1:size(uPtCh,1)
-                    idx = (uPtChIdx==k);
-                    mpwr_ratio_box1(k) = mean(pwr_ratio_box1(idx));
-                    mpwr_ratio_box2(k) = mean(pwr_ratio_box2(idx));
-                end
-
-                mpwr_ratio_box12 = [mpwr_ratio_box1,mpwr_ratio_box2];
-
-                aH4(3) = subplot(1,3,3,'parent',fH4);
-                boxplot(aH4(3),mpwr_ratio_box12,{'box1 (-.)','box2 (--)'})
-                hold(aH4(3),'on');
-                for k=1:size(mpwr_ratio_box12,1)
-                    x1 = (rand-0.5)/3+1;
-                    x2 = (rand-0.5)/3+2;
-                    plot(aH4(3),x1,mpwr_ratio_box12(k,1),'Marker',mrk_style{rgnum(k)},'MarkerFaceColor',mrk_color{ptnum(k)},'MarkerEdgeColor',mrk_color{ptnum(k)},'MarkerSize',mrk_size(rgnum(k)),'LineWidth',2);
-                    plot(aH4(3),x2,mpwr_ratio_box12(k,2),'Marker',mrk_style{rgnum(k)},'MarkerFaceColor',mrk_color{ptnum(k)},'MarkerEdgeColor',mrk_color{ptnum(k)},'MarkerSize',mrk_size(rgnum(k)),'LineWidth',2);
-                    plot(aH4(3),[x1,x2],mpwr_ratio_box12(k,:),'LineStyle',':','Color',mrk_color{ptnum(k)})
-                end
-                [h,p,ci,stats] = ttest2(mpwr_ratio_box12(:,1),mpwr_ratio_box12(:,2));
-                ylabel(aH4(3),'Theta/Gamma Ratio')
-                title(aH4(3),sprintf('Mean Across Patient/Region (p=%0.1e)\nPatient (r=1, g=2, b=3, c=4, m=5)\nRegion (o=anthip, +=lattemp, *=entperi, x=posthip)',p))
-
-                %checking model fits
-                checkFooofModelFit(obj.MultTrans,boxcomprng);
-
+                % fH4 = figure('Position',[50,50,650,550]);
+                % aH4 = axes('Parent',fH4);
+                % boxplot(aH4,[ccdx_box1,ccdx_box2],{'box1 (-.)','box2 (--)'})
+                % hold(aH4,'on');
+                % mrk_style = {'o','+','*','x'}; %by region -> 1=AntHipp, 2=LatTemp, 3=Ent+Peri, 4=PostHipp+Para
+                % mrk_size = [6,10,10,10];
+                % mrk_color = {'r','g','b','c','m'}; %by patient -> 1:5
+                % for k=1:length(ccdx_box1)
+                %     x1 = (rand-0.5)/3+1;
+                %     x2 = (rand-0.5)/3+2;
+                %     plot(aH4,x1,ccdx_box1(k),'Marker',mrk_style{rgnum(k)},'MarkerFaceColor',mrk_color{ptnum(k)},'MarkerEdgeColor',mrk_color{ptnum(k)},'MarkerSize',mrk_size(rgnum(k)),'LineWidth',2);
+                %     plot(aH4,x2,ccdx_box2(k),'Marker',mrk_style{rgnum(k)},'MarkerFaceColor',mrk_color{ptnum(k)},'MarkerEdgeColor',mrk_color{ptnum(k)},'MarkerSize',mrk_size(rgnum(k)),'LineWidth',2);
+                %     plot(aH4,[x1,x2],[ccdx_box1(k),ccdx_box2(k)],'LineStyle',':','Color',mrk_color{ptnum(k)})
+                % end
+                % [h,p,ci,stats] = ttest2(ccdx_box1,ccdx_box2);
+                % ylabel(aH4,'Correlation')
+                % title(aH4,sprintf('Vel/Pwr Correlation Across Patient/Region (p=%0.1e)\nPatient (r=1, g=2, b=3, c=4, m=5)\nRegion (o=anthip, +=lattemp, *=entperi, x=posthip)',p))
             end %fooof comparison
 
             if nargout
@@ -3418,6 +3215,8 @@ classdef RWAnalysis2 < handle
             ntrials2 = size(MT2,1);
             % baseidx = tsec>=normrng(1) & tsec<=normrng(2); %baseline (normalization) indices
             nperm = 1000; %permutations
+
+            predlist = [{'xs','gz','kd','am','ed'};{'Vel','Fix','KDE','Amb','Eda'}];
 
             trialtype = [-ones(1,ntrials1),ones(1,ntrials2)];
             pwr = cat(3,pwr1,pwr2);
@@ -3519,76 +3318,40 @@ classdef RWAnalysis2 < handle
             %Plotting
             fH = figure('Position',[50,50,1200,800]);
             aH = axes('parent',fH);
-            fH.UserData.aH = aH;
             colormap("jet");
             contourf(tsec,freq,npwr',100,'linecolor','none','parent',aH);
             hold(aH,"on");
             contour(tsec,freq,(npwr_thresh~=0)',1,'parent',aH,'linecolor','w','linewidth',2);
             set(aH,'yscale','log','YTick',2.^(1:6),'yticklabel',2.^(1:6),'yminortick','off','clim',climit); %now in units of standard deviation
             plot(aH,[0,0],[2,120],'--k','LineWidth',2);
-            pH = nan(size(obj.PredList,2),4);
+            pH = nan(size(predlist,2),3);
             yyaxis(aH,'right');
-            predytick = -(0:size(obj.PredList,2)-1)*obj.PredYscale;
-            for k=1:size(obj.PredList,2) %xs,gz,kd,am,ed
-                dx1 = MTd1.(['d_',obj.PredList{1,k}]);
-                dx2 = MTd2.(['d_',obj.PredList{1,k}]);
-                tx = MTd1.(['tsec_',obj.PredList{1,k}]);
-                %these predictors have outliers that need to be removed
-                %(binary data like gz/pe don't need outliers removed)
-                if contains(obj.PredList{1,k},["xs","am","ed"]) 
-                    dxx1 = dx1(:,~isoutlier(mean(dx1)));
-                    dxx2 = dx2(:,~isoutlier(mean(dx2)));
-                else
-                    dxx1 = dx1;
-                    dxx2 = dx2;
-                end
-                if contains(obj.PredList{1,k},'ex') 
-                    dxx1 = dxx1./mean(dxx1,1,'omitnan'); %normalize fooof exponent
-                    dxx2 = dxx2./mean(dxx2,1,'omitnan');
-                end
-                if p.predabs
-                    if contains(obj.PredList{1,k},'gy')
-                        dxx1 = abs(dxx1); %make head turn all pos for now
-                        dxx2 = abs(dxx2);
-                    end
-                end
-                dxx_me = mean(dxx1,2,"omitnan")-mean(dxx2,2,"omitnan");
-                dxx_zs = zscore(dxx_me);
+            for k=1:size(predlist,2) %xs,gz,kd,am,ed
+                dx1 = MTd1.(['d_',predlist{1,k}]);
+                dx2 = MTd2.(['d_',predlist{1,k}]);
+                tx = MTd1.(['tsec_',predlist{1,k}]);
+                dxx_me = mean(dx1(:,~isoutlier(mean(dx1))),2,"omitnan")-mean(dx2(:,~isoutlier(mean(dx2))),2,"omitnan");
                 dxx_se = nan(size(dxx_me));
                 pH(k,1) = plot(aH,tx,dxx_me,'-k','LineWidth',2);
                 pH(k,2) = plot(aH,tx,dxx_me-dxx_se,':k','LineWidth',0.5);
                 pH(k,3) = plot(aH,tx,dxx_me+dxx_se,':k','LineWidth',0.5);
-                pH(k,4) = plot(aH,tx,dxx_zs,'-k','LineWidth',2);
             end  
-            fH.UserData.pH = pH;
-            set(pH,'visible','off');
-            if contains(p.predtype,'All')
-                if isempty(p.predidxs)
-                    predidxs = 1:size(obj.PredList,2);
-                end
-                pytick = predytick(1:length(predidxs));
-                plist = obj.PredList(2,predidxs);
-                for k=1:length(predidxs)
-                    idx = predidxs(k);
-                    ph = pH(idx,4);
-                    y = get(ph,'YData');
-                    y = y-mean(y);
-                    y = y+pytick(k);
-                    set(ph,'visible','on','ydata',y);
-                end
-                set(aH,'YTick',fliplr(pytick),'YTickLabel',fliplr(plist))
-                ylim(aH,[pytick(end)-obj.PredYscale,obj.PredYscale])
-                ylabel(aH,'');
-            else
-                predidx = strcmp(obj.PredList(2,:),p.predtype);
-                set(pH(predidx,1:3),'visible','on');
-                ylabel(aH,p.predtype);
-                if any(predidx)
-                    yl = diff(obj.PredYlim(predidx,:));
-                    ylim(aH,[-yl,yl])
-                else
+            predidx = strcmp(predlist(2,:),p.predtype);
+            set(pH(~predidx,:),'visible','off');
+            ylabel(aH,p.predtype);
+            switch p.predtype
+                case 'Vel'
+                    ylim(aH,[-2,2])
+                case 'Fix'
+                    ylim(aH,[-1,1])
+                case 'KDE'
+                    ylim(aH,[-2,2])
+                case 'Amb'
+                    ylim(aH,[-250,250])
+                case 'Eda'
+                    ylim(aH,[-1,1])
+                otherwise
                     aH.YAxis(2).Visible = 'off';
-                end
             end
             yyaxis(aH,'left');
             cb = colorbar(aH);
@@ -4312,6 +4075,10 @@ classdef RWAnalysis2 < handle
             end
         end
 
+        function openMultSegGLMEGUI(obj,varargin)
+            MultSegGLMEGUI(obj);
+        end
+
         function varargout = plotMultGLME(obj,varargin)
             %Runs glme for specified model
             %
@@ -4880,17 +4647,16 @@ classdef RWAnalysis2 < handle
             
         end %plotMultInOutDiff
 
-        function varargout = plotSpecGramVideoGUI(obj,varargin)
+        %%%%%%%%%%%%%% Old/Unused %%%%%%%%%%%%%%%%%%
+
+        function plotTransSpecGramGUI(obj,varargin)
             %Plots spectrogram for specified patient/walk/transition along
             %with video and allows user to scroll through video frames with
             %current time marked in spectrogram. Use left/right arrows to
-            %scroll. Alt+arrow advances by 100 frames. Shift+arrow
-            %advances by 10 frames. Need to add raw data and other
-            %predictors in a separate axis. Also, need to have it
-            %play/record to file.
+            %scroll. Ctrl+arrow advances by 100 frames. Shift+arrow
+            %advances by 10 frames.
             %
-            %plotTransSpecGramGUI('patient',3,'walknum',2,'evntnum',6,'transtype','Lost Beg'); %good example of theta suppression
-            %plotTransSpecGramGUI('patient',3,'walknum',4,'evntnum',6,'transtype','Lost Beg'); %good example of theta suppression + eda spike
+            %plotTransSpecGramGUI('patient',1,'walknum',1,'evntnum',1,'transtype','Outdoor Beg');
 
             p = parseInputs(obj,varargin{:});
             if isempty(p.patient)
@@ -4905,228 +4671,83 @@ classdef RWAnalysis2 < handle
             if isempty(p.transtype)
                 error('Need to specify transtype!');
             end
-           
             pt = p.patient;
             wlk = p.walknum;
             evnt = p.evntnum;
             trans = p.transtype; %'Outdoor Beg', etc
-            predidxs = p.predidxs;
-        
-            if isempty(obj.MultTrans)
-                disp('loading mult patient data...');
-                obj.loadMultData;
+
+            if all(pt~=obj.PatientIdx)
+                disp('loading new patient data...')
+                obj.loadData('PatientIdx',pt,'transtype',trans);
             end
+
+            obj.loadVid; %loads videos for all walks for a patient
+            vid = obj.Vid.VidObj{wlk};
                 
-            winsec = 20; %full window size centered on event
+            db = obj.DB;
+            db = db(contains(db.Event,trans),:);
+            db = db(db.Walk==wlk,:);
+            db = db(evnt,:);
 
-            %Getting trials and specgram data
-            obj.filterMultTransData('transtype',trans,'regiontype','Custom','walktype',num2str(wlk),'desctype','','patienttype',num2str(pt),'customregion',[repmat(pt,4,1),(1:4)']); %table of all trials and corresponding info (this creates MT and must be run before getFilteredMultTransData)
-            disp(obj.MultTrans.MT);
-            obj.MultTrans.MT = obj.MultTrans.MT(evnt,:);
-            obj.getFilteredMultTransData([-winsec,winsec]); %raw power for all trials (time x freq x trial)
-            chan = obj.MultTrans.MT.chan;
-
-            ptdata = obj.MultTable{pt}(wlk,:);
-            ntp = ptdata.ntp_np{1}(obj.MultTrans.MT.npidx);
-            [~,pupilframe] = min(abs(ptdata.ntp_pupil{1}-ntp));
-
-            %Wavelet
-            d_wv = obj.MultTrans.MTd.d_wv;
-            t_wv = obj.MultTrans.MTd.tsec_wv;
-            f_wv = obj.MultTrans.MTd.freq_wv;
-
-            %X/Y gaze (need to load from file -> should add to mult patient pipeline instead)
-            fname = sprintf('RWNApp_RW%d_Walk%d.mat',pt,wlk);
-            if isfile(fname)
-                disp(['Loading: ',fname])
-                SS = load(fname);
-            elseif isfile(fullfile(obj.RootDir,fname))
-                disp(['Loading: ',fullfile(obj.RootDir,fname)])
-                SS = load(fullfile(obj.RootDir,fname));
-            else
-                disp(['Loading: ',fullfile('\\155.100.91.44\d\Tyler\RealWorld\',fname)])
-                SS = load(fullfile('\\155.100.91.44\d\Tyler\RealWorld\',fname));
+            if any(db.Patient~=pt) || any(db.Walk~=wlk)
+                error('Patient or walk do not match!');
             end
-            d_gaze_fix = SS.d_gaze_fix;
-            d_gaze_x = SS.d_gaze_x;
-            d_gaze_y = SS.d_gaze_y;
-            ntp_gaze = SS.ntp_gaze; %ntp in sec
-            fs_gaze = SS.fs_gaze;
-            t_gaze_samp = (-fs_gaze*winsec:fs_gaze*winsec);
-            [~,midx] = min(abs(ntp_gaze-ntp));
-            d_gaze_fix = d_gaze_fix(t_gaze_samp+midx);
-            d_gaze_x = d_gaze_x(t_gaze_samp+midx);
-            d_gaze_y = d_gaze_y(t_gaze_samp+midx);
-            ntp_gaze = ntp_gaze(t_gaze_samp+midx);
 
-            %Video
-            Files = findRWAFiles(fullfile('\\155.100.91.44\D\Data\RealWorldNavigationCory',['RW',num2str(pt)],'Original',['Walk',num2str(wlk)]));
-            vid = VideoReader(Files.pupil_vid_file);
+            winsec = 32;
+
+            fs_np = obj.DTable.fs_np(wlk);
+            nsamp = winsec*fs_np;
+            tsamp = (-nsamp:nsamp); %+-32 sec (2sec removed for artifact, so +-30sec)
+            tsec = tsamp/fs_np;
+            tfull = db.NPSample+tsamp; %+-12sec
+
             nfr = round(vid.FrameRate*winsec);
-            tframes = (-nfr:nfr)+pupilframe; %frames matching tfull above
+            tframes = (-nfr:nfr)+db.PupilFrame; %frames matching tfull above
             tfrsec = (-nfr:nfr)./vid.FrameRate;
             cf = 1;
-            ntp_pupil = SS.ntp_pupil(tframes);
-            cntp = ntp_pupil(cf); %current ntp time
-            [~,cs_gaze] = min(abs(cntp-ntp_gaze));
 
-            %Audio
-            aud_info = audioinfo(Files.pupil_vid_file);
-            aud_samp_start = round((tframes(1)/vid.FrameRate)*aud_info.SampleRate); %starting audio sample
-            aud_samp_end = round((tframes(end)/vid.FrameRate)*aud_info.SampleRate);
-            [aud_y,Fs] = audioread(Files.pupil_vid_file,[aud_samp_start,aud_samp_end]);
-            aud = audioplayer(aud_y,Fs);
+            fH = figure('Position',[50,50,1700,500],'Visible','on');
+            fH.Name = sprintf('Pt%0.0f, Wk%0.0f, Evnt%0.0f',pt,wlk,evnt);
+            aH = nan(1,4); pH = nan(1,4);
+            for k=1:4 %chan
+                aH(k) = subplot(4,1,k,'parent',fH);
+                d = obj.DTable.d_np{wlk}(tfull,k);
+                d(d<-500) = 0;
+                d(isnan(d)) = 0;
+                lb = obj.ChanLabels{pt,k};
+                PSG = PermSpecGram(d,'Fs',250,'FPass',[2,64],'TimeRng',[tsec(1),tsec(end)],'NormRng',[tsec(1)+2,tsec(end)-2]);
+                PSG.calcSpecGram('AnalysisType','Pwr','NormType','Mean','Smoothing',[1000,5],'ErrPerc',[]);
+                PSG.plotSpecGram('ShowRaw',true,'Clim',[-3,3],'aH',aH(k));
+                plot(aH(k),[0,0],[0,8],'k'); %center line
+                pH(k) = plot(aH(k),[tsec(1)+2,tsec(1)+2],[0,8],'k'); %video line
+                xlim(aH(k),[tsec(1)+2,tsec(end)-2])
+                title(aH(k),lb)
+            end
 
-            fH = figure('Position',[50,50,2000,800],'Visible','on','Colormap',jet,'Color','k');
-            fH.Name = sprintf('Pt%0.0f, Wk%0.0f, Evnt%0.0f, r/l_arrow(shift/alt)->inc/dec_frame, p->start/stop_play, r->record',pt,wlk,evnt);
-            tl = tiledlayout(fH,2,10);
-            % tl.Padding = 'compact';
-
-            %specgram
-            aH = nexttile(tl,6,[1,5]);
-            contourf(t_wv,f_wv,10*log10(d_wv)',100,'linecolor','none','parent',aH);
-            hold(aH,'on');
-            plot(aH,[0,0],[2,120],'k'); %center line
-            pH = plot(aH,[t_wv(1),t_wv(1)],[2,120],'k'); %video line
-            peplist = {'pe1','pe2','pe3','pe4'};
-            pepfreq = [4,8;8,12;12,16;16,30];
-            for k=1:length(peplist)
-                dx = obj.MultTrans.MTd.(['d_',peplist{k}]); %pepisode
-                tx = obj.MultTrans.MTd.(['tsec_',peplist{k}]);
-                cc = bwconncomp(dx);
-                B = regionprops(cc,'BoundingBox');
-                B = cat(1,B.BoundingBox);
-                for m=1:size(B,1)
-                    b = B(m,[2,4]);
-                    x = floor([b(1),sum(b),sum(b),b(1)]);
-                    x(x<1) = 1; x(x>length(tx)) = length(tx);
-                    x = tx(x);
-                    rectangle('Position',[x(1),pepfreq(k,1),x(2)-x(1),pepfreq(k,2)-pepfreq(k,1)],'EdgeColor','w','LineStyle',':','LineWidth',2,'Parent',aH,'Curvature',0.5);
-                end
-            end
-            set(aH,'yscale','log','YTick',2.^(1:6),'yticklabel',2.^(1:6),'yminortick','off','clim',[-10,10]);
-            axis(aH,[t_wv(1),t_wv(end),2,64])
-            lb = sprintf('Pt%d, Ch%d, %s',pt,chan,obj.ChanLabels{pt,chan});
-            title(aH,lb,'Color','w','FontSize',14)
-            xlabel(aH,'sec','Color','w','FontSize',12);
-            ylabel(aH,'Hz','Color','w','FontSize',12);
-            set(aH,'FontSize',12,'YTick',[2,4,8,16,32,64],'YTickLabel',{'2','4','8','16','32','64'})
-            for k=1:length(aH.XTick)
-                aH.XTickLabel{k} = sprintf('\\color[rgb]{%f,%f,%f}%s', [1,1,1], aH.XTickLabel{k});
-            end
-            for k=1:length(aH.YTick)
-                aH.YTickLabel{k} = sprintf('\\color[rgb]{%f,%f,%f}%s', [1,1,1], aH.YTickLabel{k});
-            end
-            cb = colorbar(aH);
-            ylabel(cb,'dB','Color','w','FontSize',12);
-            set(cb,'FontSize',12,'Ticks',[-10,0,10],'TickLabels',{'-10','0','10'});
-            for k=1:length(cb.TickLabels)
-                cb.TickLabels{k} = sprintf('\\color[rgb]{%f,%f,%f}%s', [1,1,1], cb.TickLabels{k});
-            end
-            axtoolbar(aH,{'pan','zoomin'});
-
-            %video
-            aH2 = nexttile(tl,1,[2,4]);
+            fH2 = figure;
+            aH2 = axes('parent',fH2);
             iH2 = image(read(vid,tframes(cf)),'parent',aH2);
-            hold(aH2,"on");
-            d_gaze_x(d_gaze_x<1) = 1; d_gaze_x(d_gaze_x>vid.Width) = vid.Width;
-            d_gaze_y(d_gaze_y<1) = 1; d_gaze_y(d_gaze_y>vid.Height) = vid.Height;
-            gH2 = plot(aH2,d_gaze_x(cs_gaze),d_gaze_y(cs_gaze),'or','MarkerSize',10,'LineWidth',2);
             axis(aH2,'image')
             set(aH2,'xtick',[],'xticklabel',[],'ytick',[],'yticklabel',[]);
-            title(aH2,sprintf('Frame = %0.0f',tframes(cf)),'color','w','FontSize',14)
-            aH2.Toolbar = [];
-
-            %predictors
-            predlist = [{'np';'LFP'},obj.PredList];
-            predyscale = obj.PredYscale;
-            aH3 = nexttile(tl,16,[1,5]);
-            hold(aH3,'on');
-            pH3 = nan(size(predlist,2),1);
-            yt = -(0:size(predlist,2)-1)*predyscale;
-            for k=1:size(predlist,2)
-                dx = obj.MultTrans.MTd.(['d_',predlist{1,k}]);
-                tx = obj.MultTrans.MTd.(['tsec_',predlist{1,k}]);
-                pH3(k) = plot(aH3,tx,zscore(dx)+yt(k),'-k','LineWidth',1.5);
-            end  
-            set(pH3,'visible','off');
-            if isempty(predidxs)
-                predidxs = 1:size(predlist,2);
-            end
-            pytick = yt(1:length(predidxs));
-            for k=1:length(predidxs)
-                idx = predidxs(k);
-                ph = pH3(idx);
-                y = get(ph,'YData');
-                y = y-mean(y);
-                y = y+pytick(k);
-                set(ph,'visible','on','ydata',y);
-            end
-            plot(aH3,[0,0],[pytick(end)-predyscale,pytick(1)+predyscale],'k'); %center line
-            pH2 = plot(aH3,[tx(1),tx(1)],[pytick(end)-predyscale,pytick(1)+predyscale],'k'); %video line
-            axis(aH3,[t_wv(1),t_wv(end),pytick(end)-predyscale,pytick(1)+predyscale]) %make xlim same as aH
-            set(aH3,'FontSize',12,'YTick',fliplr(pytick)','YTickLabel',cellfun(@num2str,num2cell(fliplr(pytick)),'UniformOutput',false)')
-            set(aH3,'XTick',aH.XTick,'XTickLabel',aH.XTickLabel)
-            plist = fliplr(predlist(2,predidxs));
-            for k=1:length(aH3.YTick)
-                aH3.YTickLabel{k} = sprintf('\\color[rgb]{%f,%f,%f}%s', [1,1,1], plist{k});
-            end
-            xlabel(aH3,'sec','Color','w','FontSize',12);
-            axtoolbar(aH3,{'pan','zoomin'});
-
-            warning('off','MATLAB:timer:miliSecPrecNotAllowed');
+            title(aH2,sprintf('Frame = %0.0f',tframes(cf)))
 
             SS = [];
             SS.fH = fH;
             SS.aH = aH;
-            SS.xtick = aH.XTick;
-            SS.xticklabel = aH.XTickLabel;
-            SS.predlist = predlist;
-            SS.predyscale = predyscale;
             SS.pH = pH;
-            SS.pH2 = pH2;
-            SS.pH3 = pH3;
+            SS.fH2 = fH2;
             SS.aH2 = aH2;
-            SS.aH3 = aH3;
             SS.iH2 = iH2;
-            SS.gH2 = gH2;
-            SS.d_gaze_fix = d_gaze_fix;
-            SS.d_gaze_x = d_gaze_x;
-            SS.d_gaze_y = d_gaze_y;
-            SS.ntp_pupil = ntp_pupil;
-            SS.ntp_gaze = ntp_gaze;
-            SS.cntp = cntp;
-            SS.cs_gaze = cs_gaze;
             SS.cf = cf;
             SS.tframes = tframes;
             SS.tfrsec = tfrsec;
             SS.vid = vid;
-            SS.aud = aud;
-            SS.aud.TimerFcn = {@obj.playbackFcn,fH};
-            SS.aud.TimerPeriod = 1/vid.FrameRate;
-            SS.aud_y = aud_y; %audio data
-            SS.aud_Fs = Fs; %audio sample rate
-            if isfolder(p.savepath)
-                fname = sprintf('Pt%d_Wk%d_Evnt%d_%s.mp4',pt,wlk,evnt,regexprep(trans,'\s+',''));
-                SS.vname = fullfile(p.savepath,fname);
-                SS.aname = regexprep(SS.vname,'\.mp4$','.m4a');
-                SS.v = VideoWriter(SS.vname,'MPEG-4');
-            else
-                SS.v = [];
-            end
-            SS.z = zoom(fH);
-            SS.z.ActionPostCallback = @obj.zoomEvntFcn;
-            SS.p = pan(fH);
-            SS.p.ActionPostCallback = @obj.zoomEvntFcn;
 
             set(fH,'KeyPressFcn',@obj.keyEvntFcn)
             setappdata(fH,'SS',SS)
-            if nargout
-                varargout{1} = fH;
-            end
+            set(fH2,'KeyPressFcn',@obj.keyEvntFcn)
+            setappdata(fH2,'SS',SS)
         end
-
-        %%%%%%%%%%%%%% Old/Unused %%%%%%%%%%%%%%%%%%
 
         function plotTransSpecGramByWalk(obj,varargin)
             %plots specgrams for all walks for a specified event and channel
@@ -5268,10 +4889,10 @@ classdef RWAnalysis2 < handle
     %%%%%%%%%%%%%%%%%
     methods %callbacks, helper fcns
 
-        function keyEvntFcn(obj,varargin)
+        function keyEvntFcn(~,varargin)
             ky = varargin{2}.Key;
             md = cell2mat(varargin{2}.Modifier);
-           
+
             if strcmp(ky,md)
                 return;
             end
@@ -5286,91 +4907,23 @@ classdef RWAnalysis2 < handle
                     SS.cf = SS.cf + 1;
                 case 'shift+rightarrow'
                     SS.cf = SS.cf + 10;
-                case 'alt+rightarrow'
+                case 'control+rightarrow'
                     SS.cf = SS.cf + 100;
                 case 'leftarrow'
                     SS.cf = SS.cf - 1;
                 case 'shift+leftarrow'
                     SS.cf = SS.cf - 10;
-                case 'alt+leftarrow'
+                case 'control+leftarrow'
                     SS.cf = SS.cf - 100;
-                case 'p'
-                    if strcmp(SS.aud.Running,'on')
-                        stop(SS.aud);
-                    else
-                        play(SS.aud,round((SS.cf/SS.vid.FrameRate)*SS.aud.SampleRate));
-                    end
-                case 'r'
-                    %this can be converted to mp4 using ffmpeg
-                    %ffmpeg -i test.avi -c:v libx264 -c:a aac test.mp4
-                    %audio/video can be combined using ffmpeg
-                    %ffmpeg -i video.mp4 -i audio.mpa -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 -shortest output.mp4
-                    if isempty(SS.v)
-                        warning('Save directory is empty. Close the plot, add a directory location, and reopen the plot.');
-                    else
-                        open(SS.v);
-                        SS.cf = 1;
-                        for k = 1:length(SS.tframes)
-                            SS.cf = SS.cf+1;
-                            SS = obj.updatePlotFcn(SS);
-                            writeVideo(SS.v,getframe(varargin{1}));
-                        end
-                        close(SS.v);
-                        audiowrite(SS.aname,SS.aud_y,SS.aud_Fs);
-                        cmd = ['ffmpeg -i "',SS.vname,'" -i "',SS.aname,'" -c:v copy -c:a copy -map 0:v:0 -map 1:a:0 -shortest "',regexprep(SS.vname,'\.mp4','_stitched.mp4'),'"'];
-                        system(cmd);
-                    end
             end
-            SS = obj.updatePlotFcn(SS);
-            setappdata(SS.fH,'SS',SS)
-        end
-
-        function SS = updatePlotFcn(~,SS)
             SS.cf(SS.cf<1) = 1; SS.cf(SS.cf>length(SS.tframes)) = length(SS.tframes);
             SS.iH2.CData = read(SS.vid,SS.tframes(SS.cf));
-
-            SS.cntp = SS.ntp_pupil(SS.cf); %current ntp time
-            [~,SS.cs_gaze] = min(abs(SS.cntp-SS.ntp_gaze));
-            SS.gH2.XData = SS.d_gaze_x(SS.cs_gaze);
-            SS.gH2.YData = SS.d_gaze_y(SS.cs_gaze);
-            if SS.d_gaze_fix(SS.cs_gaze)
-                SS.gH2.Color = 'g';
-            else
-                SS.gH2.Color = 'r';
-            end
-
             title(SS.aH2,sprintf('Frame = %0.0f',SS.tframes(SS.cf)))
-            set(SS.pH,'xdata',[SS.tfrsec(SS.cf),SS.tfrsec(SS.cf)])
-            set(SS.pH2,'xdata',[SS.tfrsec(SS.cf),SS.tfrsec(SS.cf)])
-        end
-
-        function playbackFcn(obj,varargin)
-            SS = getappdata(varargin{3},'SS');
-            % SS.cf = SS.cf + 1;
-            syncflag = false;
-            sync_diff = SS.aud.CurrentSample/SS.aud.SampleRate - SS.vid.CurrentTime; %if positive, audio leads by sync_diff seconds and frame number needs to increase
-            if syncflag
-                if abs(sync_diff)>0.2
-                    disp('updating audio sync...')
-                    SS.cf = SS.cf+round(SS.vid.FrameRate*sync_diff);
-                else
-                    SS.cf = SS.cf+1;
-                end
-            else
-                SS.cf = SS.cf+1;
+            for k=1:4
+                set(SS.pH(k),'xdata',[SS.tfrsec(SS.cf),SS.tfrsec(SS.cf)])
             end
-            if SS.cf>length(SS.tframes)
-                stop(SS.aud);
-            end
-            SS = obj.updatePlotFcn(SS);
             setappdata(SS.fH,'SS',SS)
-        end
-
-        function zoomEvntFcn(~,varargin)
-            SS = getappdata(varargin{1},'SS');
-            xl = varargin{2}.Axes.XLim;
-            set(SS.aH,'XLim',xl,'XTick',SS.xtick,'XTickLabel',SS.xticklabel);
-            set(SS.aH3,'XLim',xl,'XTick',SS.xtick,'XTickLabel',SS.xticklabel);
+            setappdata(SS.fH2,'SS',SS)
         end
 
     end

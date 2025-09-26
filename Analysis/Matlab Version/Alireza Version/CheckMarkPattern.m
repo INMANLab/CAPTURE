@@ -89,3 +89,24 @@ for pIdx = 3:3 %unique(pList.pID)'
         end
     end
 end
+
+
+%% Source of the problem
+
+Fs = 10000;
+t1 = (1/Fs:1/Fs:.004)*1000;
+rectS = ones(size(t1));
+t2 = (1/Fs:1/Fs:.16)*1000;
+B = zeros(size(t2));
+idx = (1:16:160)*10;
+B(idx) = 1;
+X = conv(B,rectS,"same");
+
+plot(t2,B)
+
+plot(t2,X)
+
+Y = fftshift(fft(X));
+L = length(Y);
+plot(Fs/L*(-L/2:L/2-1),abs(Y),"LineWidth",3);
+pwelch(Y,[],[],[],Fs)
