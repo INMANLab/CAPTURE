@@ -80,7 +80,7 @@ def beam_filter(detections: pd.DataFrame, route_prior: Dict, config: Dict, walk_
     Apply ordered beam filter for single walk.
     """
     landmarks = route_prior['landmarks']
-    s_window = config['gates']['s_window_m']
+    s_window_sigma = config['gates']['s_window_sigma']
     min_score = config['gates']['min_score']
 
     events = []
@@ -95,7 +95,12 @@ def beam_filter(detections: pd.DataFrame, route_prior: Dict, config: Dict, walk_
         s_expected = lm_info['s_m']
         s_std = lm_info['s_std']
 
-        print(f"\n{lm_id}: Expected s={s_expected:.1f}m ± {s_std:.1f}m")
+        # Compute adaptive window based on landmark's uncertainty
+        s_window = s_window_sigma * s_std
+        s_min = max(0, s_expected - s_window)  # Don't allow negative arc-lengths
+        s_max = s_expected + s_window
+
+        print(f"\n{lm_id}: Expected s={s_expected:.1f}m ± {s_std:.1f}m (window: [{s_min:.1f}, {s_max:.1f}]m)")
 
         # Filter detections for this landmark
         lm_dets = detections[detections['landmark_id'] == lm_id].copy()
@@ -104,9 +109,7 @@ def beam_filter(detections: pd.DataFrame, route_prior: Dict, config: Dict, walk_
             print(f"  ⚠ No detections")
             continue
 
-        # Apply arc-length window
-        s_min = s_expected - s_window
-        s_max = s_expected + s_window
+        # Apply adaptive arc-length window
         lm_dets = lm_dets[(lm_dets['s_m'] >= s_min) & (lm_dets['s_m'] <= s_max)]
 
         if len(lm_dets) == 0:

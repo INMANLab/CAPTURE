@@ -5,16 +5,16 @@ inputs:
   xsens_com_enu_csv: Analysis/Main/Mapping/data/xsens_com_enu.csv
 
 gates:
-  s_window_m: 100.0
+  s_window_sigma: 2.0  # Use adaptive windows: s_expected ± (sigma * s_std)
   min_persistence_frames: 12
   min_score: 0.28
 
 weights:
-  w_vision: 0.50
-  w_sdist: 0.30
-  w_ocr: 0.10
-  w_layout: 0.05
-  w_heading: 0.05
+  w_vision: 0.70  # CLIP visual similarity (primary signal)
+  w_sdist: 0.30   # Arc-length distance penalty
+  w_ocr: 0.00     # OCR text matching (NOT YET IMPLEMENTED - see text_features.py)
+  w_layout: 0.00  # Spatial layout (NOT YET IMPLEMENTED)
+  w_heading: 0.00 # Heading consistency (NOT YET IMPLEMENTED)
 
 hmm:
   self_trans: 0.92
