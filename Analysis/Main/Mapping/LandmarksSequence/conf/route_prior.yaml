@@ -1,0 +1,64 @@
+route:
+  name: "UCLA Walk v1"
+  start_desc: "NPI lobby doors"
+
+landmarks:
+  - id: LM001
+    name: "History display case"
+    s_m: 65.0
+    s_std: 30.0
+    category: lookalike
+
+  - id: LM012
+    name: "Teal generator enclosure"
+    s_m: 480.0
+    s_std: 80.0
+    category: unique
+
+  - id: LM024
+    name: "Medical building directory"
+    s_m: 320.0
+    s_std: 50.0
+    category: lookalike
+
+  - id: LM031
+    name: "Hallway portrait board"
+    s_m: 650.0
+    s_std: 60.0
+    category: lookalike
+
+  - id: LM050
+    name: "School of Medicine entrance"
+    s_m: 800.0
+    s_std: 70.0
+    category: unique
+
+  - id: LM080
+    name: "Mid-route landmark 1"
+    s_m: 850.0
+    s_std: 75.0
+    category: lookalike
+
+  - id: LM100
+    name: "Mid-route landmark 2"
+    s_m: 900.0
+    s_std: 80.0
+    category: lookalike
+
+  - id: LM120
+    name: "Late-route landmark"
+    s_m: 1000.0
+    s_std: 85.0
+    category: lookalike
+
+  - id: LM128
+    name: "Outdoor statue"
+    s_m: 1050.0
+    s_std: 90.0
+    category: unique
+
+  - id: LM139
+    name: "Abstract painting"
+    s_m: 1100.0
+    s_std: 50.0
+    category: lookalike

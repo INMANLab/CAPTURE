@@ -1,0 +1,23 @@
+inputs:
+  # Use existing detection CSVs from Landmarks pipeline
+  detections_dir: Analysis/Main/Mapping/Landmarks/out
+  arc_length_csv: Analysis/Main/Mapping/LandmarksSequence/out/arc_length.csv
+  xsens_com_enu_csv: Analysis/Main/Mapping/data/xsens_com_enu.csv
+
+gates:
+  s_window_m: 100.0
+  min_persistence_frames: 12
+  min_score: 0.28
+
+weights:
+  w_vision: 0.50
+  w_sdist: 0.30
+  w_ocr: 0.10
+  w_layout: 0.05
+  w_heading: 0.05
+
+hmm:
+  self_trans: 0.92
+  fwd_trans: 0.07
+  skip_trans: 0.01
+  emission_floor: 1e-6
