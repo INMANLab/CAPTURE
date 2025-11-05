@@ -55,9 +55,9 @@ dat$TimetoFirstFrame = dat$TimeToFirstFixation
 dat$Event = "LMFirstFixation"
 dat$Memory = ifelse(dat$Response>=4,"Remembered","Forgotten")
 dat$Confidence = paste(dat$Response,sep = "")
-dat$Threshold = case_when(dat$Response>=5~"more than 5",
-                           dat$Response<=2~"Less than 2")
-dat$RecTask = paste(dat$RecTask," Rec Task",sep = "")
+dat$Threshold = case_when(dat$Response>=5~"more_than_5",
+                           dat$Response<=2~"Less_than_2")
+dat$RecTask = paste(dat$RecTask," RecTask",sep = "")
 
 dat$Description = paste(dat$Memory,dat$Confidence,dat$Threshold,dat$RecTask,dat$AOI,sep = "];[")
 dat$Description = paste("[",dat$Description,"]",sep = "")
