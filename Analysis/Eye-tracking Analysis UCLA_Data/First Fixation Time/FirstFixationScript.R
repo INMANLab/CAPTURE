@@ -53,17 +53,25 @@ dat$TimeToFirstFixation = dat$TimeToFirstFixation/1000 # convert to seconds
 dat = dat[!is.na(dat$TimeToFirstFixation),]
 dat$TimetoFirstFrame = dat$TimeToFirstFixation
 dat$Event = "LMFirstFixation"
-dat$Memory = ifelse(dat$Response>=4,"Remembered","Forgotten")
-dat$Confidence = paste(dat$Response,sep = "")
-dat$Threshold = case_when(dat$Response>=5~"more_than_5",
-                           dat$Response<=2~"Less_than_2")
-dat$RecTask = paste(dat$RecTask," RecTask",sep = "")
+dat$Memory = ifelse(dat$Response>=4,"LMRemembered","LMForgotten")
+dat$Confidence = paste("LMConfidence_",dat$Response,sep = "")
+dat$Threshold = case_when(dat$Response>=5~"LMConfidence_5to6",
+                           dat$Response<=2~"LMConfidence_1to2",
+                          TRUE~"LMConfidence_3to4")
+dat$RecTask = paste("LM",dat$RecTask," RecTask",sep = "")
+dat$RecTask = gsub(" ","_",dat$RecTask)
+
 
 dat$Description = paste(dat$Memory,dat$Confidence,dat$Threshold,dat$RecTask,dat$AOI,sep = "];[")
 dat$Description = paste("[",dat$Description,"]",sep = "")
 varNames <- c("pID","wID","TimetoFirstFrame","Event","Description","Memory","Confidence","Threshold","RecTask","AOI") 
 dat = dat[,varNames] 
 write.csv(dat,"TimetoFirstFixation.csv",row.names = F)
+
+unique(dat$Memory)
+unique(dat$Confidence)
+unique(dat$Threshold)
+unique(dat$RecTask)
 ############################### test ----
 fRate = 29.9664
 pID = 1
