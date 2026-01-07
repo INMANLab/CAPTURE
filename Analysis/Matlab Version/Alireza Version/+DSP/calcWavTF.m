@@ -1,4 +1,4 @@
-function J = calcWavTF(D,F,Fs)
+function J = calcWavTF(D,F,Fs,waveN)
 % This function computes a continuous wavelet (Morlet) transform on
 % a segment of EEG signal; this can be used to estimate the
 %
@@ -11,7 +11,7 @@ function J = calcWavTF(D,F,Fs)
 % returns:
 % J - time-frequency transform (complex, nfreq x ntime)
 
-wavenumber = 6;
+wavenumber = waveN;
 
 st = 1./(2*pi*(F/wavenumber));
 A = 1./sqrt(st*sqrt(pi));
