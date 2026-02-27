@@ -10,3 +10,5 @@ GUIhandle.loadMultData;
 
 %% Call the desired GUI
 MultTransSpecGramGUI(GUIhandle);
+
+MultTransITPCEyeGUI(GUIhandle);

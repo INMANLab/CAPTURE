@@ -1,0 +1,157 @@
+clear;
+clc;
+
+%%
+dat = load("D:\CAPTURE Project\GUI\Data\RWNApp_RW2_Walk4.mat");
+
+Fs = dat.fs_gaze;
+Ids = (10*60*Fs:12*60*Fs);
+gazeX = dat.d_gaze_x(Ids);
+gazeY = dat.d_gaze_y(Ids);
+
+fixationGUIO = dat.d_gaze_fix(Ids);
+tNTP = dat.ntp_gaze(Ids);
+t = tNTP-tNTP(1);
+
+fixationGUI = calcRWAFixations(gazeX,gazeY,Fs,20,500);
+fixTable = binaryToFixations(double(fixationGUI), t, Fs, 0.5);
+
+xy = cat(2,gazeX,gazeY)';
+fixations = zeros(2,size(fixTable,1));
+for i=1:size(fixations,2)
+    fixations(:,i) = round([mean(gazeX(fixTable.idx0(i):fixTable.idx1(i))), mean(gazeY(fixTable.idx0(i):fixTable.idx1(i)))]);
+end
+% fixations(fixations==0)=1;
+% fixations = fixations';
+fixationtimes = round([fixTable.start_t,fixTable.end_t]'*Fs);
+fixationtimes(fixationtimes==0)=1;
+figure
+hold on
+plot(xy(1,:),xy(2,:),'g'); %green for saccades
+for ii = 1:length(fixationtimes)
+    plot(xy(1,fixationtimes(1,ii):fixationtimes(2,ii)),...
+        xy(2,fixationtimes(1,ii):fixationtimes(2,ii)),'r'); %red for fixations
+    plot(fixations(1,ii),fixations(2,ii),'k*'); %plot mean fixation location
+end
+legend('Saccades','Fixations')
+
+
+figure
+plot(t,fixationGUIO)
+hold on
+plot(t,fixationGUI,'k.')
+ylim([0,1.2])
+legend("Original","New")
+corrcoef(double(fixationGUIO),double(fixationGUI))
+
+
+newFixations = FixationCalculation(t, gazeX, gazeY, Fs, 130);
+
+% % Plot velocity + detected saccades
+% figure; 
+% plot(t, newFixations.v_dps); hold on;
+% yline(30,'--'); % if using default threshold
+% plot(t(newFixations.isSac), newFixations.v_dps(newFixations.isSac), '.');
+% xlabel('Time (s)'); ylabel('Velocity (deg/s)');
+size(newFixations.fixations)
+
+fixBinary = fixationsToBinary(t,Fs, newFixations.fixations);
+
+corrcoef(double(fixationGUI),double(fixBinary))
+
+figure
+plot(t,fixationGUIO)
+hold on
+plot(t,fixBinary,'k*')
+ylim([0,1.2])
+legend("Original","I-VT")
+
+
+figure
+plot(t,fixationGUIO)
+hold on
+plot(t,fixationGUI,'kx')
+plot(t,fixBinary,'ro')
+ylim([0,1.2])
+legend("Original","New","I-VT")
+
+%%
+
+dat = load("D:\CAPTURE Project\GUI\Data\RWNApp_RW2_Walk4.mat");
+
+Fs = dat.fs_gaze;
+Ids = (10*60*Fs:11*60*Fs);
+gazeX = dat.d_gaze_x(Ids);
+gazeY = dat.d_gaze_y(Ids);
+tNTP = dat.ntp_gaze(Ids);
+t = tNTP-tNTP(1);
+
+fixationGUIO = dat.d_gaze_fix(Ids);
+
+eyeDat = {cat(2,gazeX,gazeY)'};
+[clusterFixation] = ClusterFix(eyeDat,1/Fs);
+clusterFixation = clusterFixation{1};
+cFixations = clusterFixation.fixationtimes;
+fixations = CreateFixationTable(cFixations',clusterFixation.fixations(1,:)',clusterFixation.fixations(2,:)',t);
+CfixBinary = fixationsToBinary(t,Fs, fixations);
+
+xy = clusterFixation.XY;
+fixations = clusterFixation.fixations;
+fixationtimes = clusterFixation.fixationtimes;
+figure
+hold on
+plot(xy(1,:),xy(2,:),'g'); %green for saccades
+for ii = 1:length(fixationtimes);
+    plot(xy(1,fixationtimes(1,ii):fixationtimes(2,ii)),...
+        xy(2,fixationtimes(1,ii):fixationtimes(2,ii)),'r.'); %red for fixations
+    plot(fixations(1,ii),fixations(2,ii),'k*'); %plot mean fixation location
+end
+legend('Saccades','Fixations')
+
+newFixations = FixationCalculation(t, gazeX, gazeY, Fs, 20, .025);
+%
+xy = cat(2,gazeX,gazeY)';
+fixations = [newFixations.fixations.x_mean,newFixations.fixations.y_mean]';
+fixationtimes = round([newFixations.fixations.start_t,newFixations.fixations.end_t]'*Fs);
+fixationtimes(fixationtimes==0)=1;
+figure
+hold on
+plot(xy(1,:),xy(2,:),'g'); %green for saccades
+for ii = 1:length(fixationtimes)
+    plot(xy(1,fixationtimes(1,ii):fixationtimes(2,ii)),...
+        xy(2,fixationtimes(1,ii):fixationtimes(2,ii)),'r'); %red for fixations
+    plot(fixations(1,ii),fixations(2,ii),'k*'); %plot mean fixation location
+end
+legend('Saccades','Fixations')
+
+%
+size(newFixations.fixations)
+fixBinary = fixationsToBinary(t,Fs, newFixations.fixations);
+
+corrcoef(double(CfixBinary),double(fixBinary))
+
+figure
+plot(t,CfixBinary)
+hold on
+plot(t,fixBinary,'k*')
+ylim([0,1.2])
+legend("Original","I-VT")
+
+
+%% 
+report = compareFixTables(fixTable, newFixations.fixations, t, Fs);
+report.metrics
+report.duration
+
+
+fixBinary = fixationsToBinary(t,Fs, newFixations.fixations);
+
+tabA = binaryToFixations(double(fixationGUI), t, Fs, 0.08);
+MaskA = fixationsToBinary(t,Fs, tabA);
+tabB = binaryToFixations(MaskA, t, Fs, 0.08);
+MaskB = fixationsToBinary(t,Fs, tabB);
+
+corrcoef(double(MaskA),double(MaskB))
+report = compareFixTables(tabA, tabB, t, Fs);
+report.metrics
+report.duration

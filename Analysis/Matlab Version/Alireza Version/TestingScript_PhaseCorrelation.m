@@ -45,21 +45,21 @@ for idx = 1:length(Patients)
 end
 
 %%
-pID = 5;
-wID = 6;
+pID = 1;
+wID = 5;
 chanIdx = strcmp(chanMap.RegionLabel,region);
 chanIdx = chanIdx(chanMap.Pt==pID);
 idx = find(Patients==pID & Walks == wID);
 
 d = dat{idx};
 evTable = d.evnts_tbl;
-% startNTP = evTable.NTP(evTable.Event=="Walk Beg");
-% endNTP = evTable.NTP(evTable.Event=="Walk End");
-startNTP = evTable.NTP(evTable.Event=="Lost Beg");
-endNTP = evTable.NTP(evTable.Event=="Lost End");
+startNTP = evTable.NTP(evTable.Event=="Walk Beg");
+endNTP = evTable.NTP(evTable.Event=="Walk End");
+% startNTP = evTable.NTP(evTable.Event=="Lost Beg");
+% endNTP = evTable.NTP(evTable.Event=="Lost End");
 
-startNTP = startNTP(1)-10;
-endNTP = startNTP+20;
+% startNTP = startNTP(1)-10;
+% endNTP = startNTP+20;
 
 npDat = d.d_np(:,chanIdx);
 fsNP = d.fs_np;
@@ -114,12 +114,27 @@ tEEG = (0:Nnp-1)'/fsNP;
 % Convert to double (interp1 needs numeric); keep as 0/1
 fixEEG = interp1(tFix, double(fixGaze), tEEG, 'previous', 'extrap');
 
-% fxDat = diff([0;fxDat]);
-% fxDat(fxDat<0)=0;
+fixEEG = diff([0;fixEEG]);
+fixEEG(fixEEG<0)=0;
 
 % Optional: smooth a little if you want less “step-like” regressor
 % fixEEG = movmean(fixEEG, round(0.050*fsNP)); % 50 ms window   
 
+
+%
+idx = find(fixEEG);
+idx = idx(idx>round((6*fsNP)));
+% idx = idx(idx<idx(end)+round((6*fsNP)));
+EEGMat = zeros(length(idx(1)-round((2*fsNP)):idx(1)+round((2*fsNP))),length(idx));
+
+for i=1:(length(idx)-1)
+    EEGMat(:,i) = eegRaw(idx(i)-round((2*fsNP)):idx(i)+round((2*fsNP)),1);
+end
+size(EEGMat,1)
+figure
+plot((1:1001)/fsNP,mean(EEGMat,2,"omitnan"))
+xline(2)
+%%
 % -------------------- BANDPASS FILTER EEG --------------
 
 % Zero-phase IIR bandpass (stable, easy). For more control use FIR.
@@ -361,7 +376,7 @@ title(sprintf('Band: %s [%g-%g] Hz, Ch %d', bandName, bandHz(1), bandHz(2), exam
 % ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 pID = 5;
-wID = 1;
+wID = 5;
 chanIdx = strcmp(chanMap.RegionLabel,region);
 chanIdx = chanIdx(chanMap.Pt==pID);
 idx = find(Patients==pID & Walks == wID);
