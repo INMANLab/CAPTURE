@@ -159,31 +159,11 @@ report.duration
 %%
 dataPath = "D:\CAPTURE Project\Hardware\Wearables\Phone Tests\My Test\Data\MyExport\";
 GazeDat = readtable(dataPath+"gaze.csv");
-fixOrig = double(~isnan(GazeDat.fixationId));
 
 gazeX = GazeDat.gazeX_px_;
 gazeY = GazeDat.gazeY_px_;
 tNTP = GazeDat.timestamp_ns_;
-t = (tNTP-tNTP(1))/1e9;
+t = (tNTP-tNTP(1))/1e-9;
 Fs = 200;
 
-newFixations = FixationCalculation(t, gazeX, gazeY, Fs, 60, .05);
-fixBinary = fixationsToBinary(t,Fs, newFixations.fixations);
-corrcoef(double(fixOrig),double(fixBinary))
-
-fixationGUI = calcRWAFixations(gazeX,gazeY,Fs,20,500);
-corrcoef(double(fixOrig),double(fixationGUI))
-
-figure
-plot(t,fixOrig)
-hold on
-plot(t,fixationGUI,'k*')
-
-eyeDat = {cat(2,gazeX,gazeY)'};
-[clusterFixation] = ClusterFix(eyeDat,1/Fs);
-clusterFixation = clusterFixation{1};
-cFixations = clusterFixation.fixationtimes;
-fixations = CreateFixationTable(cFixations',clusterFixation.fixations(1,:)',clusterFixation.fixations(2,:)',t);
-CfixBinary = fixationsToBinary(t,Fs, fixations);
-
-corrcoef(double(fixOrig),double(CfixBinary))
+newFixations = FixationCalculation(t, GazeDat.gazeX_px_, , Fs, 20, .025);
