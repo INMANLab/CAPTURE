@@ -12,3 +12,5 @@ GUIhandle.loadMultData;
 MultTransSpecGramGUI(GUIhandle);
 
 MultTransITPCEyeGUI(GUIhandle);
+
+MultTransSpecGramGUI_SimilarityMatrix(GUIhandle);

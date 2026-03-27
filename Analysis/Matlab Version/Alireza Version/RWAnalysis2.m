@@ -3052,6 +3052,118 @@ classdef RWAnalysis2 < handle
             MTd2 = obj.MultTrans.MTd;
             MT2 = obj.MultTrans.MT;
             pwr2 = MTd2.d_wv;
+
+            %% -----------------------------------------------
+            MTd1 = rmfield(MTd1,'d_wv');
+            MTd2 = rmfield(MTd2,'d_wv');
+
+            pId1 = MT1.patient;
+            pId2 = MT2.patient;
+            
+            allTbl = table;
+            
+            for pIdx = 1:5
+                idx1 = pId1 == pIdx;
+                idx2 = pId2 == pIdx;
+            
+                simOut = ComputeEpochSimilarityFromStructs(MTd1, MTd2, idx1, idx2, 'cosine');
+            
+                flds = fieldnames(simOut);
+            
+                for f = 1:numel(flds)
+                    fname = flds{f};
+            
+                    if ~isfield(simOut.(fname),'within_X1')
+                        continue
+                    end
+            
+                    measure = erase(fname,'d_');
+            
+                    T = table;
+                    T.pIdx        = pIdx;
+                    T.measure     = string(measure);
+                    T.within_X1   = simOut.(fname).within_X1;
+                    T.within_X2   = simOut.(fname).within_X2;
+                    T.between     = simOut.(fname).between_X1X2;
+                    T.nEpochs1    = simOut.(fname).nEpochs1;
+                    T.nEpochs2    = simOut.(fname).nEpochs2;
+            
+                    allTbl = [allTbl; T];
+                end
+            end
+            
+            
+            PlotSimilarityBarsFromTable(allTbl);
+            a=0;
+            %%
+        end
+        function varargout = plotMultTransSpecDiffPerm_Original(obj,varargin)
+            %Plot specgram difference for two transitions for all patients
+            %and channels using smoothed/downsampled specgram data
+            %generated in getMultTransData.
+            %
+            %plotMultTransSpecDiffPerm('transtype',{'Correct Turn Beg','Incorrect Turn Beg'},'regiontype',{'PostHipp+Para','PostHipp+Para'},'walktype',{'All Walks','All Walks'},'patienttype',{'All Patients','All Patients'},'permtype','zscore','correctiontype','cluster');
+            %plotMultTransSpecDiffPerm('transtype',{'Doorway','Doorway'},'desctype',{'open','closed'},'regiontype',{'PostHipp+Para','PostHipp+Para'},'walktype',{'All Walks','All Walks'},'patienttype',{'All Patients','All Patients'},'permtype','zscore','correctiontype','cluster');
+            p = obj.parseInputs(varargin{:});
+
+            if isempty(p.permtype)
+                error('permtype must be specified!');
+            end
+
+            warning('off','MATLAB:contour:ConstantData');
+
+            transtype = p.transtype; %'Outdoor Beg', 'Outdoor End', 'Doorway'
+            regiontype = p.regiontype; %'AntHipp','LatTemp','Ent+Peri','PostHipp+Para','All Chans','Custom'
+            customregion = p.customregion;
+            if isempty(customregion)
+                customregion = {[],[]};
+            end
+            walktype = p.walktype; %'First Walks','Last Walks','Stop Walks','Go Walks','All Walks', '1,2,3'
+            veltype = p.veltype;
+            if isempty(veltype)
+                veltype = {'',''};
+            end
+            patienttype = p.patienttype; %'All Patients', '1,3'
+            desctype = p.desctype; %close, open, etc. (optional, will skip if empty)
+            if isempty(desctype)
+                desctype = {'',''};
+            end
+            permtype = p.permtype; %standard, zscore
+            correctiontype = p.correctiontype; %cluster, pixel (can be empty)
+            if strcmp(correctiontype,'fdr+cluster') && strcmp(permtype,'standard')
+                error('fdr+cluster cannot be performed with the standard permtype!');
+            end
+            transrng = p.transrng; %default [-10,10]
+            normrng = transrng;
+            pval = p.pval; %default p=0.05
+            pvalclust = p.pvalclust; %default 0.01
+            if isempty(p.clim)
+                climit = [-10,10];
+            else
+                climit = p.clim;
+            end
+           
+            %Getting trials and specgram data
+            obj.filterMultTransData('transtype',transtype{1},'regiontype',regiontype{1},'walktype',walktype{1},'desctype',desctype{1},'patienttype',patienttype{1},'veltype',veltype{1},'customregion',customregion{1}); %table of all trials and corresponding info
+            obj.getFilteredMultTransData(transrng); %raw power for all trials (time x freq x trial)
+
+            %Init some params
+            MTd1 = obj.MultTrans.MTd;
+            MT1 = obj.MultTrans.MT;
+            pwr1 = MTd1.d_wv;
+            tsamp = MTd1.tsamp_wv; %+-10sec at 25Hz (downsampled by 10 from 250)
+            tsec = MTd1.tsec_wv;
+            freq = MTd1.freq_wv;
+            ntrials1 = size(MT1,1);
+            nfreq = length(freq);
+            ntime = length(tsamp);
+
+            obj.filterMultTransData('transtype',transtype{2},'regiontype',regiontype{2},'walktype',walktype{2},'desctype',desctype{2},'patienttype',patienttype{2},'veltype',veltype{2},'customregion',customregion{2}); %table of all trials and corresponding info
+            obj.getFilteredMultTransData(transrng); %raw power for all trials (time x freq x trial)
+
+            MTd2 = obj.MultTrans.MTd;
+            MT2 = obj.MultTrans.MT;
+            pwr2 = MTd2.d_wv;
             ntrials2 = size(MT2,1);
             % baseidx = tsec>=normrng(1) & tsec<=normrng(2); %baseline (normalization) indices
             nperm = 1000; %permutations
