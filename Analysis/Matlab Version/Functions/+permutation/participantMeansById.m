@@ -6,7 +6,7 @@ arguments
     patientList (:,1)
 end
 
-[~, indexCell] = participantTrialIndices(patientList);
+[~, indexCell] = permutation.participantTrialIndices(patientList);
 U = numel(indexCell);
 muByParticipant = zeros(U, 1);
 for k = 1:U

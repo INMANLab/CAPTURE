@@ -1,12 +1,12 @@
-function [nullDistribution, pValue, statisticValue, info] = permutationOneSampleVsZero( ...
+function [nullDistribution, pValue, statisticValue, info] = OneSampleVsZero( ...
     group1, patientList, args)
 %PERMUTATIONONESAMPLEVSZERO Participant-mean test vs 0 with trial-level sign-flip null.
 %
-%   [nullDistribution, pValue, statisticValue] = permutationOneSampleVsZero( ...
+%   [nullDistribution, pValue, statisticValue] = permutation.OneSampleVsZero( ...
 %       group1, patientList)
-%   [...] = permutationOneSampleVsZero(group1, patientList, nPerm)
-%   [...] = permutationOneSampleVsZero(group1, patientList, ..., nPerm=2000, Seed=42)
-%   [..., info] = permutationOneSampleVsZero(...)
+%   [...] = permutation.OneSampleVsZero(group1, patientList, nPerm)
+%   [...] = permutation.OneSampleVsZero(group1, patientList, ..., nPerm=2000, Seed=42)
+%   [..., info] = permutation.OneSampleVsZero(...)
 %
 %   Trial-level observations are sign-flipped i.i.d. within each participant;
 %   the statistic is mean across participants of mean trial value (per participant).
@@ -29,28 +29,29 @@ if ~isnan(args.Seed)
 end
 
 if numel(group1) ~= numel(patientList)
-    error('permutationOneSampleVsZero:group1 and patientList must have the same length.');
+    error('OneSampleVsZero:group1 and patientList must have the same length.');
 end
 
 rngStream = RandStream.getGlobalStream();
 
-muObs = participantMeansById(group1, patientList);
+muObs = permutation.participantMeansById(group1, patientList);
 statisticValue = mean(muObs, 'omitnan');
 
 nullDistribution = zeros(nPerm, 1);
 for p = 1:nPerm
-    g1p = permuteLabelsWithinParticipants('oneSample', group1, [], patientList, rngStream);
-    muP = participantMeansById(g1p, patientList);
+    g1p = permutation.permuteLabelsWithinParticipants('oneSample', group1, patientList, [], rngStream);
+    muP = permutation.participantMeansById(g1p, patientList);
     nullDistribution(p) = mean(muP, 'omitnan');
 end
 
-pValue = twoSidedPValue(statisticValue, nullDistribution);
+pValue = permutation.twoSidedPValue(statisticValue, nullDistribution);
 
 if nargout > 3
     info = struct();
-    info.feasibility = permutationFeasibility('oneSample', patientList, nPerm, group1);
+    info.nPerm = nPerm;
+    info.feasibility = permutation.Feasibility('oneSample', patientList, nPerm, group1);
     info.participantMeansObserved = muObs;
-    [info.participantIds, ~] = participantTrialIndices(patientList);
+    [info.participantIds, ~] = permutation.participantTrialIndices(patientList);
 end
 
 end

@@ -1,19 +1,12 @@
-function out = permutationFeasibility(mode, patientList, nPerm, group1, group2)
-%PERMUTATIONFEASIBILITY Unique null draws vs requested permutations (log scale).
+function out = Feasibility(mode, patientList, nPerm, group1, group2)
+%FEASIBILITY Unique null draws vs requested permutations (log scale).
 %
-%   out = permutationFeasibility("twoSample", patientList, nPerm, group1, group2)
-%   out = permutationFeasibility("oneSample", patientList, nPerm, group1)
+%   out = permutation.Feasibility("twoSample", patientList, nPerm, group1, group2)
+%   out = permutation.Feasibility("oneSample", patientList, nPerm, group1)
 %
-%   Estimates whether there are enough *distinct* label assignments to use
+%   Estimates whether there are enough distinct label assignments to use
 %   nPerm unique permutations without replacement. For typical data the space
 %   is enormous; Monte Carlo sampling (with replacement) is indicated.
-%
-%   Fields:
-%     .logNumUnique   log(number of distinct assignments) if finite; Inf if huge
-%     .numUnique      exp(logNumUnique) when logNumUnique < log(realmax('double'))
-%     .canDrawUniqueWithoutReplacement  logical (numUnique >= nPerm)
-%     .useMonteCarlo  true when sampling is the practical approach (always true here)
-%     .message        char array for user display
 
 arguments
     mode
@@ -25,15 +18,15 @@ end
 
 mode = validatestring(mode, {'twoSample', 'oneSample'});
 
-[~, indexCell] = participantTrialIndices(patientList);
+[~, indexCell] = permutation.participantTrialIndices(patientList);
 U = numel(indexCell);
 
 if strcmp(mode, 'twoSample')
     if isempty(group2)
-        error("permutationFeasibility:twoSample requires group2.");
+        error("Feasibility:twoSample requires group2.");
     end
     if ~isequal(size(group1(:)), size(group2(:)))
-        error("permutationFeasibility:group1 and group2 must be the same size.");
+        error("Feasibility:group1 and group2 must be the same size.");
     end
     logNum = 0;
     for k = 1:U
@@ -45,16 +38,15 @@ if strcmp(mode, 'twoSample')
         v1 = group1(idx);
         v2 = group2(idx);
         if any(isnan(v1)) || any(isnan(v2))
-            error("permutationFeasibility:NaN trial values are not supported.");
+            error("Feasibility:NaN trial values are not supported.");
         end
-        % Pool has 2*nPair values; split into two groups of nPair each.
         n = 2 * nPair;
         m = nPair;
         logNum = logNum + logMultinomialCoefficient(n, m, n - m);
     end
-else % oneSample
+else
     if ~isempty(group2)
-        error("permutationFeasibility:oneSample does not use group2.");
+        error("Feasibility:oneSample does not use group2.");
     end
     logNum = 0;
     for k = 1:U
@@ -65,7 +57,7 @@ else % oneSample
         end
         v = group1(idx);
         if any(isnan(v))
-            error("permutationFeasibility:NaN trial values are not supported.");
+            error("Feasibility:NaN trial values are not supported.");
         end
         logNum = logNum + nk * log(2);
     end
@@ -99,9 +91,8 @@ end
 end
 
 function y = logMultinomialCoefficient(n, a, b)
-% log( n! / (a! b!) ) with a+b = n  => log( nchoosek(n,a) )
 if a < 0 || b < 0 || a + b ~= n
-    error("permutationFeasibility:invalid multinomial indices.");
+    error("Feasibility:invalid multinomial indices.");
 end
 m = min(a, b);
 y = gammaln(n + 1) - gammaln(m + 1) - gammaln(n - m + 1);

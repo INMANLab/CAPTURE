@@ -1,10 +1,10 @@
 function [group1Perm, group2Perm] = permuteLabelsWithinParticipants( ...
-    mode, group1, group2, patientList, rngState)
+    mode, group1, patientList, group2, rngState)
 %PERMUTELABELSWITHINPARTICIPANTS One trial-level null draw (within participant).
 %
-%   group1Perm = permuteLabelsWithinParticipants("oneSample", group1, [], patientList)
+%   group1Perm = permuteLabelsWithinParticipants("oneSample", group1, patientList)
 %   [group1Perm, group2Perm] = permuteLabelsWithinParticipants( ...
-%       "twoSample", group1, group2, patientList)
+%       "twoSample", group1, patientList, group2)
 %
 %   twoSample : pool [group1; group2] trials per participant (paired rows),
 %               random partition of size n into pseudo-group1 and pseudo-group2.
@@ -15,8 +15,8 @@ function [group1Perm, group2Perm] = permuteLabelsWithinParticipants( ...
 arguments
     mode
     group1 (:,1) {mustBeNumeric}
-    group2 {mustBeNumeric} = zeros(0, 1)
     patientList (:,1)
+    group2 {mustBeNumeric} = zeros(0, 1)
     rngState = []
 end
 
@@ -28,7 +28,7 @@ else
     rngStream = rngState;
 end
 
-[~, indexCell] = participantTrialIndices(patientList);
+[~, indexCell] = permutation.participantTrialIndices(patientList);
 U = numel(indexCell);
 
 if strcmp(mode, 'twoSample')

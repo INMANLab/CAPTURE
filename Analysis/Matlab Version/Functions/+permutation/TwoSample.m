@@ -1,12 +1,12 @@
-function [nullDistribution, pValue, statisticValue, info] = permutationTwoGroups( ...
+function [nullDistribution, pValue, statisticValue, info] = TwoSample( ...
     group1, group2, patientList, args)
-%PERMUTATIONTWOGROUPS Participant-level two-sample test; trial-level label shuffle null.
+%TWOSAMPLE Participant-level two-condition permutation test.
 %
-%   [nullDistribution, pValue, statisticValue] = permutationTwoGroups( ...
+%   [nullDistribution, pValue, statisticValue] = permutation.TwoSample( ...
 %       group1, group2, patientList)
-%   [...] = permutationTwoGroups(group1, group2, patientList, nPerm)
-%   [...] = permutationTwoGroups(group1, group2, patientList, nPerm=2000, Seed=42)
-%   [..., info] = permutationTwoGroups(...)
+%   [...] = permutation.TwoSample(group1, group2, patientList, nPerm)
+%   [...] = permutation.TwoSample(group1, group2, patientList, nPerm=2000, Seed=42)
+%   [..., info] = permutation.TwoSample(...)
 %
 %   group1, group2, patientList must be Nx1 with the same N (paired trial rows).
 %   Per participant, trial values from both conditions are pooled and randomly
@@ -28,32 +28,33 @@ if ~isnan(args.Seed)
 end
 
 if numel(group1) ~= numel(group2) || numel(group1) ~= numel(patientList)
-    error("permutationTwoGroups:group1, group2, and patientList must have the same length.");
+    error("TwoSample:group1, group2, and patientList must have the same length.");
 end
 
 rngStream = RandStream.getGlobalStream();
 
-mu1 = participantMeansById(group1, patientList);
-mu2 = participantMeansById(group2, patientList);
+mu1 = permutation.participantMeansById(group1, patientList);
+mu2 = permutation.participantMeansById(group2, patientList);
 statisticValue = mean(mu1 - mu2, 'omitnan');
 
 nullDistribution = zeros(nPerm, 1);
 for p = 1:nPerm
-    [g1p, g2p] = permuteLabelsWithinParticipants( ...
-        'twoSample', group1, group2, patientList, rngStream);
-    m1 = participantMeansById(g1p, patientList);
-    m2 = participantMeansById(g2p, patientList);
+    [g1p, g2p] = permutation.permuteLabelsWithinParticipants( ...
+        'twoSample', group1, patientList, group2, rngStream);
+    m1 = permutation.participantMeansById(g1p, patientList);
+    m2 = permutation.participantMeansById(g2p, patientList);
     nullDistribution(p) = mean(m1 - m2, 'omitnan');
 end
 
-pValue = twoSidedPValue(statisticValue, nullDistribution);
+pValue = permutation.twoSidedPValue(statisticValue, nullDistribution);
 
 if nargout > 3
     info = struct();
-    info.feasibility = permutationFeasibility('twoSample', patientList, nPerm, group1, group2);
+    info.nPerm = nPerm;
+    info.feasibility = permutation.Feasibility('twoSample', patientList, nPerm, group1, group2);
     info.participantMeansObservedG1 = mu1;
     info.participantMeansObservedG2 = mu2;
-    [info.participantIds, ~] = participantTrialIndices(patientList);
+    [info.participantIds, ~] = permutation.participantTrialIndices(patientList);
 end
 
 end

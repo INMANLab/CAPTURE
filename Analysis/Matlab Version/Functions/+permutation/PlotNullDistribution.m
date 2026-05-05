@@ -1,8 +1,8 @@
-function h = plotPermutationNull(nullDistribution, statisticValue, options)
-%PLOTPERMUTATIONNULL Histogram of null draws with observed statistic line.
+function h = PlotNullDistribution(nullDistribution, statisticValue, options)
+%PLOTNULLDISTRIBUTION Plot null distribution and observed statistic.
 %
-%   plotPermutationNull(nullDistribution, statisticValue)
-%   h = plotPermutationNull(..., Name=Value)
+%   permutation.PlotNullDistribution(nullDistribution, statisticValue)
+%   h = permutation.PlotNullDistribution(..., Name=Value)
 %
 %   Name-value pairs:
 %     Title        char/string (default auto from p-value if provided)
