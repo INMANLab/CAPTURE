@@ -1,5 +1,5 @@
 function [group1Perm, group2Perm] = permuteLabelsWithinParticipants( ...
-    mode, group1, patientList, group2, rngState)
+    mode, group1, patientList, group2, rngState, patientChannel)
 %PERMUTELABELSWITHINPARTICIPANTS One trial-level null draw (within participant).
 %
 %   group1Perm = permuteLabelsWithinParticipants("oneSample", group1, patientList)
@@ -11,6 +11,7 @@ function [group1Perm, group2Perm] = permuteLabelsWithinParticipants( ...
 %   oneSample : multiply each trial by i.i.d. Rademacher (+1/-1) within participant.
 %
 %   rngState : optional RandStream or [] to use default global stream.
+%   patientChannel : optional Nx1; if nonempty, permute within (participant, channel).
 
 arguments
     mode
@@ -18,6 +19,7 @@ arguments
     patientList (:,1)
     group2 {mustBeNumeric} = zeros(0, 1)
     rngState = []
+    patientChannel (:,1) = []
 end
 
 mode = validatestring(mode, {'twoSample', 'oneSample'});
@@ -28,7 +30,14 @@ else
     rngStream = rngState;
 end
 
-[~, indexCell] = permutation.participantTrialIndices(patientList);
+if isempty(patientChannel)
+    [~, indexCell] = permutation.participantTrialIndices(patientList);
+else
+    if numel(patientChannel) ~= numel(patientList)
+        error("permuteLabelsWithinParticipants:patientChannel must match patientList length.");
+    end
+    [~, ~, indexCell] = permutation.participantChannelStrata(patientList, patientChannel);
+end
 U = numel(indexCell);
 
 if strcmp(mode, 'twoSample')

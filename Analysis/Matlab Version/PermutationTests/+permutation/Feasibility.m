@@ -1,12 +1,16 @@
-function out = Feasibility(mode, patientList, nPerm, group1, group2)
+function out = Feasibility(mode, patientList, nPerm, group1, group2, patientChannel)
 %FEASIBILITY Unique null draws vs requested permutations (log scale).
 %
 %   out = permutation.Feasibility("twoSample", patientList, nPerm, group1, group2)
 %   out = permutation.Feasibility("oneSample", patientList, nPerm, group1)
+%   out = permutation.Feasibility(..., group1, group2, patientChannel)  % optional 6th arg
 %
 %   Estimates whether there are enough distinct label assignments to use
 %   nPerm unique permutations without replacement. For typical data the space
 %   is enormous; Monte Carlo sampling (with replacement) is indicated.
+%
+%   If patientChannel is provided (Nx1, same length as patientList), each stratum
+%   is a unique (participant, channel) pair instead of participant-only.
 
 arguments
     mode
@@ -14,11 +18,19 @@ arguments
     nPerm (1,1) {mustBePositive, mustBeInteger}
     group1 (:,1) {mustBeNumeric}
     group2 (:,1) {mustBeNumeric} = zeros(0, 1)
+    patientChannel (:,1) = []
 end
 
 mode = validatestring(mode, {'twoSample', 'oneSample'});
 
-[~, indexCell] = permutation.participantTrialIndices(patientList);
+if isempty(patientChannel)
+    [~, indexCell] = permutation.participantTrialIndices(patientList);
+else
+    if numel(patientChannel) ~= numel(patientList)
+        error("Feasibility:patientChannel must have the same length as patientList.");
+    end
+    [~, ~, indexCell] = permutation.participantChannelStrata(patientList, patientChannel);
+end
 U = numel(indexCell);
 
 if strcmp(mode, 'twoSample')
