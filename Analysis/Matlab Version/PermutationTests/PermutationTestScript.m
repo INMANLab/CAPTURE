@@ -6,8 +6,8 @@ clc;
 load RWA_PowerBox_Example.mat;
 
 patientList = patient(:);
-group1 = pwr_box1(:);
-group2 = pwr_box2(:);
+group1 = 10*log10(pwr_box1(:));
+group2 = 10*log10(pwr_box2(:));
 patientChannel = channels(:);
 
 % Reproducible randomization for demo runs.
@@ -51,6 +51,16 @@ permutation.FeasibilityCheck('oneSample', patientList, nPerm, patientChannel);
     patientChannel=patientChannel, Aggregation="participant");
 permutation.PlotNullDistribution(nullNest1, statNest1, PValue=pNest1);
 permutation.PlotParticipantAveragesBoxplot(pNest1, statNest1, infoNest1, ...
+    Title="One-sample nested (participant x channel)",PlotPerChannelStratumPoints=true);
+
+
+
+permutation.FeasibilityCheck('oneSample', patientList, nPerm, patientChannel);
+[nullNest2, pNest2, statNest2, infoNest2] = permutation.OneSampleVsZero( ...
+    group2, patientList, nPerm=nPerm, Seed=42, ...
+    patientChannel=patientChannel, Aggregation="participant");
+permutation.PlotNullDistribution(nullNest2, statNest2, PValue=pNest2);
+permutation.PlotParticipantAveragesBoxplot(pNest2, statNest2, infoNest2, ...
     Title="One-sample nested (participant x channel)",PlotPerChannelStratumPoints=true);
 
 permutation.FeasibilityCheck('twoSample', patientList, nPerm, patientChannel);
