@@ -24,7 +24,8 @@ p_load(ez,
 RD = "D:\\CAPTURE Project\\GUI\\Data\\"
 WD = "D:\\CAPTURE Project\\GUI\\Data\\"
 ###################################################### Load data -----
-datSeg = read.csv(paste(RD,"MultSegData.csv",sep = ""))
+datSeg = read.csv(paste(RD,"MultSegDataJune2026.csv",sep = ""))
+unique(datSeg$RegionLabel)
 datAH = datSeg[datSeg$RegionLabel == "AntHipp",]
 datAH = datAH %>% group_by(Pt,Chan,Walk) %>%
   mutate(Epoch = seq(1,n(),1)) %>%
@@ -32,10 +33,11 @@ datAH = datAH %>% group_by(Pt,Chan,Walk) %>%
 
 # A = datAH[,c("Pt", "Chan", "Walk","Epoch")]
 names(datAH)
-predictorVars = c("Vel", "Fix", "Amb", "KDE", "EDA")
+predictorVars = c("Vel", "Fix", "Amb", "KDE","KDE2", "EDA","Fix2","Sac2","HeadTurn")
 idCols = c("Pt", "Chan", "Walk","Epoch")
 outcomeVars = c("wvTheta", "wvAlpha", "wvBeta", "wvGamma", "wvHG", 
-                "mtTheta", "mtAlpha", "mtBeta", "mtGamma", "mtHG")
+                "mtTheta", "mtAlpha", "mtBeta", "mtGamma", "mtHG",
+                "peTheta", "peAlpha", "peBetaL", "peBetaH","theta_gamma")
 
 datAH = as.data.frame(lapply(datAH, FUN = function(x) {x[is.nan(x)]=NA;return(x)}))
 ######################## Data Uniqueness ----------
